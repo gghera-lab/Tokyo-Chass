@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f1018">
+<title>Кабинет</title>
+<script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=Press+Start+2P&display=swap">
+</head>
+<body>
+<style>
+/* Кабинет: шкалы страны · экран 16:9 · карточка решения · нижняя панель. Тёмная «ночная канцелярия», золото и чернила. */
+:root{--ink:#0f1018;--night:#171925;--plum:#22253a;--line:#3d4262;--gold:#e0b85a;--cream:#f2ead6;--muted:#a9adc4;--ok:#6fd08c;--bad:#e0485a;--warn:#ffb347;--blue:#7fb7ff;
+  --f-cap:'Balsamiq Sans','Trebuchet MS',cursive;--f-body:'PT Sans','Segoe UI',Roboto,Arial,sans-serif;--f-px:'Press Start 2P','Courier New',monospace;color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%;overscroll-behavior:none}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:var(--f-body);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+#wrap{position:fixed;inset:0;height:var(--tg-viewport-stable-height,100dvh);display:flex;justify-content:center}
+#stage{position:relative;display:flex;flex-direction:column;width:100%;max-width:560px;height:100%;box-sizing:border-box;outline:none;
+  padding-top:max(env(safe-area-inset-top,0px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px)));
+  padding-bottom:max(env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));
+  padding-left:max(env(safe-area-inset-left,0px),var(--tg-safe-area-inset-left,0px));padding-right:max(env(safe-area-inset-right,0px),var(--tg-safe-area-inset-right,0px))}
+/* шкалы */
+#hud{flex:none;padding:6px 8px 4px;background:#0a0b11;border-bottom:2px solid #000}
+.hmeta{display:flex;justify-content:space-between;font:9px/1.2 var(--f-px);color:var(--muted);padding:0 2px 6px}.hmeta b{color:var(--gold);font-weight:400}
+#stats{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.stat{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+.stat .tube{position:relative;width:100%;max-width:46px;height:34px;background:#1a1c2a;border:2px solid #000;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.stat .tube i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,#b88a2e,var(--gold));transition:height .6s steps(8)}
+.stat .tube i.warn{background:linear-gradient(0deg,#c46a1a,var(--warn))}.stat .tube i.danger{background:linear-gradient(0deg,#8a1f2a,var(--bad));animation:blink 1s steps(2) infinite}
+.stat .tube::after{content:'';position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.18)}
+.stat small{font:7.5px/1 var(--f-px);color:var(--muted);letter-spacing:-.02em;white-space:nowrap}
+.dot{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #000;transition:all .15s}
+.dot.small{width:6px;height:6px}.dot.big{width:11px;height:11px;top:-6px}
+.arr{position:absolute;top:10px;left:50%;transform:translateX(-50%);font:12px/1 var(--f-body);font-weight:700;text-shadow:0 0 3px #000,0 0 3px #000}
+.arr.up{color:var(--ok)}.arr.dn{color:var(--bad)}.arr.big{font-size:17px;top:7px}
+@keyframes blink{50%{opacity:.55}}
+/* экран */
+#screen{position:relative;flex:none;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
+#view{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+#crt{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 62%,rgba(0,0,0,.45) 100%)}
+#cap{position:absolute;left:0;right:0;top:7%;text-align:center;font:700 clamp(22px,8vw,38px)/1 var(--f-cap);color:#fff;-webkit-text-stroke:clamp(5px,1.8vw,8px) #000;paint-order:stroke fill;text-transform:uppercase;pointer-events:none;text-shadow:0 4px 0 rgba(0,0,0,.5);padding:0 10px}
+#cap.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}@keyframes pop{0%{transform:scale(.4) rotate(-4deg);opacity:0}100%{transform:none;opacity:1}}
+/* карточка */
+#lower{position:relative;flex:1;min-height:0;padding:8px 10px}
+#card{height:100%;box-sizing:border-box;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(18,19,30,.97);border:3px solid var(--cream);box-shadow:0 0 0 3px #000,inset 0 0 0 3px #262a40;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.chead{display:flex;gap:10px;align-items:center}
+.cport{flex:none;width:58px;height:40px;border:2px solid #000;box-shadow:0 0 0 2px var(--gold);background:#22253a}.cport canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.cwho{min-width:0;flex:1}#cname{font:700 15px/1.2 var(--f-body)}#crole{font-size:12px;color:var(--muted)}
+.ctype{flex:none;font:8px/1.2 var(--f-px);padding:5px 6px;border:2px solid #000;background:var(--plum);color:var(--gold);max-width:92px;text-align:center}
+.ctype.later{background:#3a1f2a;color:#ffb0b8}.ctype.summary{background:#1f2f3a;color:var(--blue)}.ctype.meeting{color:#c9b0ff}.ctype.rounds{color:#9fe0b0}
+#ctext{font:16.5px/1.42 var(--f-body);color:#fff}
+#opts{display:flex;flex-direction:column;gap:7px;margin-top:2px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:var(--plum);color:var(--cream);border:2px solid #000;box-shadow:inset 0 0 0 2px var(--line);font:600 15.5px/1.25 var(--f-body);padding:11px 12px;min-height:46px;cursor:pointer;width:100%}
+.opt .ok{font:10px var(--f-px);color:var(--gold);flex:none}
+.opt.on{box-shadow:inset 0 0 0 3px var(--gold);background:#33304e}
+.opt.next{justify-content:center;background:var(--gold);color:#000;box-shadow:inset -3px -3px 0 #a07a24}
+#hint{font-size:12px;color:var(--muted);min-height:1em}
+#panel{position:absolute;inset:8px 10px;z-index:3;background:rgba(10,11,17,.97);border:3px solid var(--gold);box-shadow:0 0 0 3px #000;padding:14px;overflow:auto}
+.vote .vh{font:10px var(--f-px);color:var(--gold);margin-bottom:10px}
+.vrow{display:flex;justify-content:space-between;align-items:baseline;font:12px var(--f-px)}.vrow b{font:28px var(--f-px);color:var(--ok);font-weight:400}
+.vbar{position:relative;height:18px;background:#1a1c2a;border:2px solid #000;margin:22px 0 14px}.vbar i{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(90deg,var(--ok) 0 8px,#4fae6c 8px 10px);width:0}
+.vbar em{position:absolute;top:-18px;transform:translateX(-50%);font:9px var(--f-px);color:var(--gold);font-style:normal}.vbar em::after{content:'';position:absolute;left:50%;top:14px;width:2px;height:22px;background:var(--gold)}
+.vres{padding:10px 12px;border:2px solid #000;margin-bottom:12px}.vres.ok{box-shadow:inset 0 0 0 3px var(--ok)}.vres.bad{box-shadow:inset 0 0 0 3px var(--bad)}.vres b{font-size:16px}.vres p{margin:6px 0 0;font-size:14.5px;line-height:1.4}
+/* нижняя панель */
+#bar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:6px 8px 8px;background:#0a0b11;border-top:2px solid #000}
+#bar button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:46px;background:var(--plum);color:var(--cream);border:2px solid #000;font:8px/1.1 var(--f-px);cursor:pointer}
+#bar .ic{font:16px/1 var(--f-body)}#bar button:active{background:var(--gold);color:#000}
+#qn{position:absolute;top:3px;right:5px;background:var(--bad);color:#fff;font:8px/1 var(--f-px);padding:2px 4px}
+/* старт */
+#start,#end{position:absolute;inset:0;z-index:6;overflow:auto;background:radial-gradient(ellipse at 50% 20%,#2e2614,#0a0b11 70%);padding:max(18px,env(safe-area-inset-top,0px)) 16px 20px;box-sizing:border-box}
+.st-in{max-width:440px;margin:0 auto;text-align:center}
+.st-age{display:inline-block;border:2px solid var(--bad);color:var(--bad);font:10px var(--f-px);padding:4px 6px;margin-bottom:10px}
+.st-in h1{font:700 clamp(46px,15vw,74px)/.95 var(--f-cap);color:#fff;-webkit-text-stroke:9px #000;paint-order:stroke fill;margin:0;text-shadow:0 6px 0 rgba(0,0,0,.5)}
+.st-in .sub{font:10px/1.6 var(--f-px);color:var(--gold);margin:12px 0 8px}
+.st-in p{font-size:15px;line-height:1.45;margin:0 0 14px}
+#roles{display:grid;gap:8px;margin:6px 0 10px}
+.rolec{display:flex;gap:12px;align-items:center;text-align:left;background:var(--plum);color:var(--cream);border:3px solid #000;box-shadow:inset 0 0 0 2px var(--line);padding:10px;cursor:pointer;min-height:64px}
+.rolec:active,.rolec:focus-visible{box-shadow:inset 0 0 0 3px var(--gold);outline:none}
+.rolec canvas{flex:none;width:72px;height:50px;image-rendering:pixelated;border:2px solid #000}
+.rolec b{display:block;font:700 18px/1.2 var(--f-cap);margin-bottom:3px}.rolec small{font-size:12.5px;line-height:1.3;color:var(--muted)}
+#bcont{width:100%;font:11px/1.3 var(--f-px);background:var(--gold);color:#000;border:3px solid #000;box-shadow:inset -4px -4px 0 #a07a24;padding:14px;min-height:48px;margin-bottom:8px;cursor:pointer}
+.st-in small.fine{display:block;margin-top:10px;color:var(--muted);font:9px/1.7 var(--f-px)}
+/* финал */
+#endbox{max-width:440px;margin:0 auto;text-align:center}
+.etype{font:9px/1.5 var(--f-px);color:var(--muted)}
+#endbox h2{font:700 clamp(34px,11vw,54px)/1 var(--f-cap);color:#fff;-webkit-text-stroke:7px #000;paint-order:stroke fill;margin:12px 0}
+.etext{font-size:16px;line-height:1.45}
+.erows{display:grid;gap:6px;margin:16px 0;text-align:left}
+.er{display:grid;grid-template-columns:118px 1fr 30px;gap:8px;align-items:center;font-size:13px}.er i{height:10px;background:#1a1c2a;border:2px solid #000;position:relative}.er i b{position:absolute;left:0;top:0;bottom:0;background:var(--gold)}.er em{font:9px var(--f-px);font-style:normal;text-align:right}
+.er.hidden span{color:#ffb0b8}.er.hidden i b{background:var(--bad)}
+.enote{font-size:13.5px;color:var(--muted);font-style:italic;line-height:1.4}
+.ebtn{display:grid;gap:8px;margin-top:14px}.ebtn button{font:11px var(--f-px);background:var(--gold);color:#000;border:3px solid #000;box-shadow:inset -4px -4px 0 #a07a24;padding:14px;min-height:48px;cursor:pointer}.ebtn button.alt{background:var(--cream);box-shadow:inset -4px -4px 0 #c8bb9c}
+/* окна */
+#modal{position:fixed;inset:0;background:rgba(6,6,10,.85);display:grid;place-items:center;z-index:50;padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px))}
+.mbox{width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--night);border:3px solid var(--cream);box-shadow:0 0 0 3px #000}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--plum);border-bottom:3px solid #000}
+#mtitle{font:11px/1.4 var(--f-px);color:var(--gold);margin:0}#mclose{font:10px var(--f-px);background:var(--cream);color:#000;border:2px solid #000;padding:10px;min-height:40px;cursor:pointer}
+#mbody{overflow:auto;padding:12px 14px 18px;font-size:15px;line-height:1.45;-webkit-user-select:text;user-select:text}
+#mbody h3{font:10px var(--f-px);color:var(--gold);margin:16px 0 8px}
+.pnote{color:var(--muted);font-size:13px}
+.menu{display:grid;gap:8px}.menu button{font:11px/1.2 var(--f-px);text-align:left;background:var(--cream);color:#000;border:2px solid #000;box-shadow:inset -3px -3px 0 #c8bb9c;padding:14px;min-height:48px;cursor:pointer}
+ol.log{list-style:none;padding:0;margin:0;display:grid;gap:6px}ol.log li{display:grid;gap:2px;background:var(--plum);padding:8px 10px;border-left:4px solid var(--gold)}.lw{font:8px var(--f-px);color:var(--muted)}ol.log li span:last-child{color:var(--muted);font-size:13.5px}
+dl.rl{display:grid;gap:4px;margin:0}dl.rl dt{font:9px var(--f-px);color:var(--gold);margin-top:8px}dl.rl dd{margin:0}
+ul.sl{padding-left:18px;display:grid;gap:6px;margin:0}
+.muted{color:var(--muted)}
+/* горизонтальный телефон */
+#stage.land{max-width:none;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'hud hud' 'screen lower' 'bar bar'}
+#stage.land #hud{grid-area:hud}#stage.land #screen{grid-area:screen;align-self:center}#stage.land #lower{grid-area:lower}#stage.land #bar{grid-area:bar}
+#stage.land #bar button{min-height:36px;flex-direction:row}#stage.land .stat .tube{height:20px}
+@media (max-height:600px){.stat .tube{height:24px}#ctext{font-size:15px}.opt{min-height:40px;padding:8px 10px;font-size:14.5px}}
+body.rm *{animation-duration:0s!important;transition:none!important}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style>
+<div id="wrap">
+  <div id="stage" tabindex="-1">
+    <header id="hud">
+      <div class="hmeta"><span id="hrole"></span><b id="hweek"></b></div>
+      <div id="stats">
+        <div class="stat"><div class="tube"><i id="bar-kz"></i></div><small>Казна</small><span class="dot" id="dot-kz"></span><span class="arr" id="arr-kz"></span></div>
+        <div class="stat"><div class="tube"><i id="bar-dv"></i></div><small>Доверие</small><span class="dot" id="dot-dv"></span><span class="arr" id="arr-dv"></span></div>
+        <div class="stat"><div class="tube"><i id="bar-sv"></i></div><small>Свобода</small><span class="dot" id="dot-sv"></span><span class="arr" id="arr-sv"></span></div>
+        <div class="stat"><div class="tube"><i id="bar-bz"></i></div><small>Безоп.</small><span class="dot" id="dot-bz"></span><span class="arr" id="arr-bz"></span></div>
+        <div class="stat"><div class="tube"><i id="bar-ek"></i></div><small>Эконом.</small><span class="dot" id="dot-ek"></span><span class="arr" id="arr-ek"></span></div>
+        <div class="stat"><div class="tube"><i id="bar-el"></i></div><small>Элиты</small><span class="dot" id="dot-el"></span><span class="arr" id="arr-el"></span></div>
+      </div>
+    </header>
+    <div id="screen"><canvas id="view" width="384" height="216" aria-hidden="true"></canvas><div id="crt"></div><div id="cap" aria-live="polite"></div></div>
+    <section id="lower">
+      <div id="card" role="region" aria-label="Встреча">
+        <div class="chead"><div class="cport"><canvas id="cport" width="104" height="72"></canvas></div><div class="cwho"><div id="cname"></div><div id="crole"></div></div><div id="ctype" class="ctype"></div></div>
+        <div id="ctext" aria-live="polite"></div>
+        <div id="opts"></div>
+        <div id="hint"></div>
+      </div>
+      <div id="panel" hidden></div>
+    </section>
+    <nav id="bar">
+      <button data-act="log"><span class="ic">▤</span>Журнал<span id="qn" hidden>0</span></button>
+      <button data-act="role"><span class="ic">◈</span>Роль</button>
+      <button data-act="sound"><span class="ic">♪</span><span id="bsoundt">Звук</span></button>
+      <button data-act="menu"><span class="ic">≡</span>Меню</button>
+    </nav>
+    <div id="start">
+      <div class="st-in">
+        <div class="st-age">18+</div>
+        <h1>КАБИНЕТ</h1>
+        <div class="sub">сорок недель у власти</div>
+        <p>Мурландия. Шесть шкал, сорок недель, бесконечная очередь в приёмной. Не дайте ни одной шкале упасть до нуля или взлететь до ста.</p>
+        <button id="bcont" hidden>Продолжить</button>
+        <div id="roles"></div>
+        <small class="fine">Выберите роль · тап по варианту — выбор, второй тап — решение<br>Сатира · 20–30 минут · страна и персонажи вымышлены</small>
+      </div>
+    </div>
+    <div id="end" hidden><div id="endbox"></div></div>
+  </div>
+</div>
+<div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <div class="mbox"><div class="mhead"><h2 id="mtitle"></h2><button id="mclose">Закрыть</button></div><div id="mbody"></div></div>
+</div>
+
+<script>
+/* ================= ПИКСЕЛЬНЫЙ ДВИЖОК ================= */
+const W = 384, H = 216;
+const BAYER = [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v => (v + .5) / 16);
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return [c, x]; }
+const hex = h => { h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; };
+function R(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function P(c, x, y, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); }
+function hrow(c, y, x0, x1, col) { x0 = Math.round(x0); x1 = Math.round(x1); if (x1 < x0) return; c.fillStyle = col; c.fillRect(x0, Math.round(y), x1 - x0 + 1, 1); }
+function trap(c, y0, y1, l0, r0, l1, r1, col) { for (let y = y0; y <= y1; y++) { const t = (y - y0) / ((y1 - y0) || 1); hrow(c, y, l0 + (l1 - l0) * t, r0 + (r1 - r0) * t, typeof col === 'function' ? col(t, y) : col); } }
+function vtrap(c, x0, x1, t0, b0, t1, b1, col) { for (let x = x0; x <= x1; x++) { const k = (x - x0) / ((x1 - x0) || 1); const t = Math.round(t0 + (t1 - t0) * k), b = Math.round(b0 + (b1 - b0) * k); c.fillStyle = typeof col === 'function' ? col(k, x) : col; c.fillRect(x, t, 1, b - t + 1); } }
+function ell(c, cx, cy, rx, ry, col, half) { for (let y = -ry; y <= ry; y++) { if (half === 'bottom' && y < 0) continue; if (half === 'top' && y > 0) continue; const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); hrow(c, cy + y, cx - w, cx + w, col); } }
+function line(c, x0, y0, x1, y1, col) { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy; c.fillStyle = col; for (let i = 0; i < 3000; i++) { c.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } }
+function dith(c, x, y, w, h, col, ph = 0) { c.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + ph) & 1; i < w; i += 2) c.fillRect(x + i, y + j, 1, 1); }
+function frame(c, x, y, w, h, col, t = 1) { R(c, x, y, w, t, col); R(c, x, y + h - t, w, t, col); R(c, x, y, t, h, col); R(c, x + w - t, y, t, h, col); }
+function grad(c, x, y, w, h, cols, horiz) {
+  const img = c.getImageData(x, y, w, h), d = img.data, rgb = cols.map(hex), n = rgb.length - 1;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const t = (horiz ? i / ((w - 1) || 1) : j / ((h - 1) || 1)) * n; let b = Math.floor(t), f = t - b; if (b >= n) { b = n - 1; f = 1; }
+    const th = BAYER[(((j + y) & 3) * 4) + ((i + x) & 3)]; const col = rgb[f > th ? b + 1 : b]; const k = (j * w + i) * 4;
+    d[k] = col[0]; d[k+1] = col[1]; d[k+2] = col[2]; d[k+3] = 255;
+  }
+  c.putImageData(img, x, y);
+}
+function glow(c, cx, cy, r, col, k = .6) { c.fillStyle = col; for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { const d = Math.sqrt(x * x + y * y) / r; if (d >= 1) continue; const px = Math.round(cx + x), py = Math.round(cy + y); if (BAYER[((py & 3) * 4) + (px & 3)] < (1 - d) * k) c.fillRect(px, py, 1, 1); } }
+function dtrap(c, y0, y1, l0, r0, l1, r1, col, k = .5) { c.fillStyle = col; for (let y = y0; y <= y1; y++) { const t = (y - y0) / ((y1 - y0) || 1); const a = Math.round(l0 + (l1 - l0) * t), b = Math.round(r0 + (r1 - r0) * t); for (let x = a; x <= b; x++) if (BAYER[((y & 3) * 4) + (x & 3)] < k) c.fillRect(x, y, 1, 1); } }
+function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 10000) / 10000; }; }
+
+/* пиксельный шрифт: цифры 3x5, буквы 5x7 */
+const DIG = { '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],'2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],'5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],'8':['111','101','111','101','111'],'9':['111','101','111','001','111'],':':['000','010','000','010','000'],' ':['000','000','000','000','000'] };
+function pnum(c, str, x, y, s, col) { str = String(str); for (const ch of str) { const g = DIG[ch] || DIG[' ']; g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') R(c, x + i * s, y + j * s, s, s, col); })); x += 4 * s; } }
+const GL = { 'З':['01110','10001','00001','00110','00001','10001','01110'], 'А':['00100','01010','10001','10001','11111','10001','10001'], 'К':['10001','10010','10100','11000','10100','10010','10001'], 'О':['01110','10001','10001','10001','10001','10001','01110'], 'Н':['10001','10001','10001','11111','10001','10001','10001'], '§':['01110','10000','01110','10001','01110','00001','01110'] };
+function glyph(c, ch, x, y, s, col, shade) { const g = GL[ch]; if (!g) return; g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') { if (shade) R(c, x + i * s + Math.max(1, s / 4), y + j * s + Math.max(1, s / 4), s, s, shade); } })); g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') R(c, x + i * s, y + j * s, s, s, col); })); }
+
+function clock(c, cx, cy, r, h, m, sec, rim = '#d9b45a') {
+  ell(c, cx, cy, r + 1, r + 1, '#140f1c'); ell(c, cx, cy, r, r, rim); ell(c, cx, cy, r - 2, r - 2, '#f4ead2');
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; P(c, cx + Math.sin(a) * (r - 3), cy - Math.cos(a) * (r - 3), '#5a4a3a'); }
+  const ah = ((h % 12) + m / 60) / 12 * Math.PI * 2, am = m / 60 * Math.PI * 2;
+  line(c, cx, cy, cx + Math.sin(ah) * (r * .45), cy - Math.cos(ah) * (r * .45), '#140f1c');
+  line(c, cx, cy, cx + Math.sin(am) * (r * .75), cy - Math.cos(am) * (r * .75), '#140f1c');
+  if (sec != null) { const as = sec / 60 * Math.PI * 2; line(c, cx, cy, cx + Math.sin(as) * (r * .8), cy - Math.cos(as) * (r * .8), '#c8343c'); }
+  P(c, cx, cy, '#c8343c');
+}
+
+/* ================= СПРАЙТЫ КОТОВ ================= */
+const CAT_L = ["...FF......","..FPF......","..FPPF.....","..FPPFFFFFF",".FFFFFFFFFF",".FFFFFFFFFF","FFFFFFFFFFF","FFFFWEEFFFF","FFFFEKEFFFF","FFFFEKEFFFF","FFFFFFFFFLP","DFFFFFFLLOL",".DFFFFFLLLL","..DDFFFFFFF","....SSSSSTR","...SSSSSSTR","..SSSSSSSSR",".sSSSSSSSSR",".sSSSSSSSSR",".sSSSSSSSSS",".sSSSSSSSSS","FFsSSSSSSSS","FF.SSSSSSSS","...SSSSSSSS","....SSSSSS.","....SSSSSS.","....sSSSSs.","...BBBBBBB."];
+const CAT = CAT_L.map(l => l + [...l].reverse().join(''));
+const GW = 32, GH = 31, OX = 4, OY = 1;
+const TAIL1 = [[24,25],[26,24],[27,22],[28,20],[28,18],[28,16],[28,14],[27,12],[26,11]];
+const TAIL2 = [[24,25],[26,24],[27,22],[28,20],[28,18],[29,16],[29,14],[29,12],[28,11]];
+const PAL0 = { L:'#e8e0d0', O:'#140f1c', K:'#140f1c', W:'#ffffff', P:'#e59aa8', B:'#1e1a26', N:'#f4ecd8', G:'#d9b45a', Y:'#c8343c', X:'#d9b45a', M:'#5a4a3a', H:'#333344', V:'#111118', Q:'#6b4a2a', E:'#f2d14b' };
+const FEAT = {
+  glasses(put) { for (const ex of [8, 19]) { for (let x = ex - 1; x <= ex + 3; x++) { put(x, 7, 'G'); put(x, 11, 'G'); } for (let y = 7; y <= 11; y++) { put(ex - 1, y, 'G'); put(ex + 3, y, 'G'); } } for (let x = 12; x <= 17; x++) put(x, 8, 'G'); },
+  lanyard(put) { line2(put, 12, 15, 10, 19, 'Y'); line2(put, 19, 15, 13, 19, 'Y'); for (let y = 19; y <= 23; y++) for (let x = 8; x <= 12; x++) put(x, y, 'N'); for (let x = 8; x <= 12; x++) put(x, 19, 'Y'); put(9, 21, 'K'); put(10, 21, 'K'); put(11, 22, 'K'); },
+  pin(put) { put(9, 17, 'X'); put(10, 17, 'X'); put(9, 18, 'Y'); },
+  press(put) { for (let y = 18; y <= 21; y++) for (let x = 7; x <= 11; x++) put(x, y, 'N'); put(8, 19, 'K'); put(9, 19, 'K'); put(8, 20, 'K'); put(10, 20, 'Y'); },
+  cap(put) { for (let y = 1; y <= 5; y++) for (let x = 6; x <= 25; x++) put(x, y, y === 5 ? 'V' : 'H'); for (let x = 4; x <= 16; x++) put(x, 6, 'V'); put(15, 3, 'X'); put(16, 3, 'X'); },
+  briefcase(put) { for (let y = 21; y <= 27; y++) for (let x = 25; x <= 31; x++) put(x, y, 'Q'); for (let x = 25; x <= 31; x++) put(x, 27, 'O'); put(27, 20, 'K'); put(28, 19, 'K'); put(29, 20, 'K'); put(28, 23, 'X'); put(24, 22, 'F'); put(24, 23, 'F'); },
+  papers(put) { for (let y = 19; y <= 25; y++) for (let x = 0; x <= 6; x++) put(x, y, 'N'); for (const y of [21, 23]) for (let x = 1; x <= 5; x++) put(x, y, 'O'); paw(put); },
+  book(put) { for (let y = 19; y <= 25; y++) for (let x = 0; x <= 6; x++) put(x, y, 'X'); for (let y = 19; y <= 25; y++) put(0, y, 'N'); put(3, 21, 'G'); put(4, 21, 'G'); paw(put); },
+  notebook(put) { for (let y = 20; y <= 25; y++) for (let x = 1; x <= 6; x++) put(x, y, 'N'); for (const y of [22, 24]) for (let x = 2; x <= 5; x++) put(x, y, 'O'); for (let x = 1; x <= 6; x++) put(x, 20, 'Y'); paw(put); },
+  strings(put) { put(13, 15, 'N'); put(13, 16, 'N'); put(13, 17, 'N'); put(16, 15, 'N'); put(16, 16, 'N'); put(16, 17, 'N'); for (let x = 9; x <= 20; x++) put(x, 15, 's'); },
+  tabby(put) { [[12,5],[13,5],[16,5],[17,5],[14,6],[15,6],[14,5],[15,7],[4,10],[5,10],[4,12],[25,10],[24,10],[25,12],[7,6],[22,6]].forEach(([x, y]) => put(x, y, 'M')); },
+  ruff(put) { [[3,11],[3,12],[2,12],[3,13],[26,11],[26,12],[27,12],[26,13]].forEach(([x, y]) => put(x, y, 'F')); for (let y = 15; y <= 17; y++) for (let x = 11 + (y - 15); x <= 18 - (y - 15); x++) put(x, y, 'L'); },
+  scar(put) { put(7, 1, '.'); put(7, 2, 'F'); put(22, 6, 'Y'); put(21, 7, 'Y'); },
+  tux(put) { for (let y = 7; y <= 10; y++) { put(14, y, 'L'); put(15, y, 'L'); } for (let y = 11; y <= 13; y++) for (let x = 9; x <= 20; x++) put(x, y, 'L'); },
+  mask(put) { for (let y = 10; y <= 13; y++) for (let x = 10; x <= 19; x++) put(x, y, 'M'); put(13, 11, 'P'); put(14, 11, 'P'); put(15, 11, 'P'); put(16, 11, 'P'); [[4,22],[5,22],[4,23],[5,23],[24,22],[25,22],[24,23],[25,23]].forEach(([x, y]) => put(x, y, 'M')); },
+  belt(put) { for (let x = 7; x <= 22; x++) put(x, 22, 'K'); put(14, 22, 'X'); put(15, 22, 'X'); },
+  camera(put) { for (let y = 19; y <= 24; y++) for (let x = 0; x <= 7; x++) put(x, y, 'H'); for (let y = 20; y <= 23; y++) for (let x = 2; x <= 5; x++) put(x, y, 'V'); put(3, 21, 'W'); put(6, 19, 'X'); paw(put); }
+};
+function paw(put) { put(4, 22, 'F'); put(5, 22, 'F'); put(4, 23, 'F'); put(5, 23, 'F'); }
+function line2(put, x0, y0, x1, y1, ch) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let i = 0; i <= n; i++) put(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), ch); }
+function buildGrid(o, fr) {
+  const G = []; for (let j = 0; j < GH; j++) G.push(Array(GW).fill('.'));
+  const put = (x, y, ch) => { if (y >= 0 && y < GH && x >= 0 && x < GW) G[y][x] = ch; };
+  const tail = fr.tail2 ? TAIL2 : TAIL1;
+  for (let i = 0; i < tail.length - 1; i++) { const [a, b] = tail[i], [c2, d] = tail[i + 1]; const ch = i >= tail.length - 3 ? 'D' : 'F'; line2(put, a, b, c2, d, ch); line2((x, y, h) => put(x - 1, y, h), a, b, c2, d, ch); }
+  CAT.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') put(OX + i, OY + j, ch); }));
+  (o.feat || []).forEach(f => FEAT[f] && FEAT[f](put));
+  if (fr.blink) { for (const ex of [8, 19]) { for (let x = ex; x <= ex + 2; x++) { put(x, 8, 'F'); put(x, 9, 'O'); put(x, 10, 'F'); } } }
+  if (fr.talk) { for (let x = 13; x <= 16; x++) put(x, 12, 'O'); put(14, 13, 'P'); put(15, 13, 'P'); put(13, 13, 'O'); put(16, 13, 'O'); }
+  return G;
+}
+function renderGrid(G, pal, outline = '#140f1c') {
+  const [cv, c] = mk(GW + 2, GH + 2);
+  c.fillStyle = outline;
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) if (G[j][i] !== '.') { c.fillRect(i, j + 1, 3, 1); c.fillRect(i + 1, j, 1, 3); }
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = G[j][i]; if (ch === '.') continue; c.fillStyle = pal[ch] || PAL0[ch] || '#ff00ff'; c.fillRect(i + 1, j + 1, 1, 1); }
+  return cv;
+}
+const SPR = {};
+function sprite(id, fr) {
+  const key = id + (fr.blink ? 'b' : '') + (fr.talk ? 't' : '') + (fr.tail2 ? '2' : '');
+  if (SPR[key]) return SPR[key];
+  const o = CH[id]; const pal = Object.assign({}, PAL0, o.pal);
+  if (!pal.D) pal.D = pal.F; if (!pal.s) pal.s = pal.S;
+  return SPR[key] = renderGrid(buildGrid(o, fr), pal);
+}
+function portrait(id) {
+  const spr = sprite(id, {}); const [cv, c] = mk(104, 72);
+  const col = CH[id].bg || '#2a2342'; R(c, 0, 0, 104, 72, col); dith(c, 0, 48, 104, 24, 'rgba(0,0,0,.25)');
+  c.drawImage(spr, 3, 0, 26, 18, 0, 0, 104, 72); return cv;
+}
+const hash = s => { let h = 7; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+function drawActor(c, a, t, speaking) {
+  const hh = hash(a.c); const s = a.s || 2;
+  const blink = ((t + hh * 37) % 3900) < 130; const talk = speaking && Math.floor(t / 110) % 2 === 0; const tail2 = Math.floor(t / 650 + hh) % 2 === 0;
+  const bob = (Math.floor(t / 520 + hh) % 2) ? 1 : 0;
+  const spr = sprite(a.c, { blink, talk, tail2 });
+  // тень
+  ell(c, a.x + 15 * s + s, a.y + (GH) * s - 1, 10 * s, 2, 'rgba(10,6,20,.35)');
+  c.drawImage(spr, 0, 0, GW + 2, GH + 2, a.x, a.y - bob, (GW + 2) * s, (GH + 2) * s);
+}
+const MINI = ["F.....F","FF...FF","FFFFFFF","FEFFFEF","FFFPFFF",".FFFFF."];
+function mini(c, x, y, fur, seat) {
+  if (seat) R(c, x - 1, y + 2, 9, 7, seat);
+  c.fillStyle = '#140f1c'; MINI.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') { c.fillRect(x + i - 1, y + j, 3, 1); c.fillRect(x + i, y + j - 1, 1, 3); } }));
+  MINI.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '.') return; c.fillStyle = ch === 'E' ? '#f2d14b' : ch === 'P' ? '#e59aa8' : fur; c.fillRect(x + i, y + j, 1, 1); }));
+}
+const FURS = ['#e58a3a','#8d93a6','#26232e','#efe0c4','#9a9286','#c98a4b','#f6f3ee','#6f7f99','#d8c27a','#5a5248','#b85c2a','#a7a9b3'];
+
+/* ================= ФОНЫ (статические слои) ================= */
+const BG = {};
+function windowsGrid(c, x0, y0, cols, rows, w, h, gx, gy, seed, litK, lit = '#ffcf6b', dark = '#2c3558', frameCol = '#5b5448') {
+  const r = rng(seed);
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const x = x0 + i * gx, y = y0 + j * gy; R(c, x - 1, y - 1, w + 2, h + 2, frameCol); R(c, x, y, w, h, r() < litK ? lit : dark); R(c, x + (w >> 1), y, 1, h, frameCol); R(c, x, y + (h >> 1), w, 1, frameCol); }
+}
+function tree(c, x, y, seed, cols) { const r = rng(seed); R(c, x - 2, y - 30, 5, 34, '#4e2d1a'); R(c, x - 2, y - 30, 1, 34, '#6b4a2a'); for (let i = 0; i < 9; i++) ell(c, x + (r() - .5) * 26, y - 40 - r() * 26, 7 + r() * 6, 6 + r() * 5, cols[i % cols.length]); for (let i = 0; i < 30; i++) P(c, x + (r() - .5) * 34, y - 30 - r() * 40, cols[(i + 1) % cols.length]); }
+BG.street = function (c, ev) {
+  grad(c, 0, 0, W, 120, ev ? ['#120f2a','#2a2550','#5a3260','#b9585a'] : ['#3b4f8f','#6f86c4','#e8a87c','#f6c98b']);
+  const r = rng(11); for (let i = 0; i < 9; i++) { const bx = i * 46 - 10, bh = 30 + r() * 40; R(c, bx, 120 - bh, 44, bh, ev ? '#1d1a36' : '#7a85a8'); windowsGrid(c, bx + 4, 124 - bh, 5, Math.floor(bh / 12), 3, 4, 8, 10, i, ev ? .5 : .1, ev ? '#ffcf6b' : '#c9d3ec', ev ? '#141230' : '#5f6a8c', ev ? '#1d1a36' : '#7a85a8'); }
+  if (ev) for (let i = 0; i < 40; i++) P(c, r() * W, r() * 40, '#f4ead2');
+  // здание
+  R(c, 36, 44, 312, 10, '#7f776b'); R(c, 36, 52, 312, 2, '#5f584d'); R(c, 40, 54, 304, 118, ev ? '#7c7568' : '#9c9487');
+  for (let x = 48; x < 340; x += 20) { R(c, x, 56, 4, 112, ev ? '#6a6458' : '#8a8276'); R(c, x, 56, 1, 112, ev ? '#8a8476' : '#b0a899'); }
+  for (let col = 0; col < 15; col++) { const x = 54 + col * 20; if (x > 150 && x < 226) continue; for (let row = 0; row < 4; row++) { const y = 62 + row * 26; const lit = rng(col * 13 + row)() < (ev ? .7 : .25); R(c, x - 1, y - 1, 12, 18, '#5b5448'); R(c, x, y, 10, 16, lit ? '#ffcf6b' : '#2c3558'); R(c, x + 5, y, 1, 16, '#5b5448'); R(c, x, y + 7, 10, 1, '#5b5448'); if (!lit) P(c, x + 1, y + 1, '#55608a'); } }
+  R(c, 156, 92, 72, 80, '#5f584d'); R(c, 152, 88, 80, 6, '#7f776b');
+  R(c, 162, 98, 60, 9, '#d9b45a'); R(c, 163, 99, 58, 7, '#b88a2e'); for (let x = 166; x < 218; x += 5) R(c, x, 101, 3, 3, '#f2d48a');
+  R(c, 168, 120, 48, 52, '#4e2d1a'); for (let x = 170; x < 214; x += 12) { R(c, x, 124, 10, 44, '#5e3820'); frame(c, x, 124, 10, 44, '#3a2010'); }
+  R(c, 191, 140, 2, 6, '#f2c14e'); R(c, 195, 140, 2, 6, '#f2c14e');
+  for (const x of [160, 176, 202, 218]) { R(c, x, 108, 7, 64, '#c9c1b2'); R(c, x + 5, 108, 2, 64, '#a39b8d'); R(c, x - 1, 106, 9, 3, '#e0d9cc'); }
+  R(c, 191, 16, 2, 30, '#d8d8e0');
+  for (let i = 0; i < 4; i++) R(c, 140 - i * 8, 172 + i * 2, 104 + i * 16, 2, i % 2 ? '#a7a29a' : '#c4beb4');
+  // улица
+  R(c, 0, 172, W, 44, ev ? '#4a4752' : '#7d7a80');
+  for (let y = 180; y < 216; y += 10) R(c, 0, y, W, 1, ev ? '#3e3b46' : '#6c6970');
+  for (let x = 0; x < W; x += 16) for (let y = 172; y < 216; y += 10) R(c, x + ((y / 10) % 2) * 8, y, 1, 10, ev ? '#3e3b46' : '#6c6970');
+  R(c, 0, 172, W, 2, '#3a3842');
+  tree(c, 14, 176, 3, ev ? ['#6b4a2a','#8a5a2a','#a8692a'] : ['#e8a33a','#d9762b','#c8343c','#f2c14e']);
+  tree(c, 368, 178, 5, ev ? ['#6b4a2a','#8a5a2a','#a8692a'] : ['#f2c14e','#e8a33a','#d9762b','#b85c2a']);
+  for (const x of [118, 264]) { R(c, x, 118, 3, 56, '#2a2a33'); R(c, x - 4, 114, 11, 5, '#2a2a33'); R(c, x - 3, 118, 9, 2, ev ? '#ffe7a8' : '#8d8a7e'); if (ev) glow(c, x + 1, 122, 14, '#ffd88a', .45); }
+};
+BG.checkpoint = function (c) {
+  grad(c, 0, 0, W, 122, ['#e3d7b8','#cdbd93']);
+  R(c, 0, 118, W, 4, '#4e2d1a'); R(c, 0, 122, W, 40, '#7a4a2a'); for (let x = 0; x < W; x += 24) { frame(c, x + 2, 126, 20, 32, '#5e3820'); }
+  grad(c, 0, 162, W, 54, ['#8e8a85','#6f6b66']); for (let k = 0; k < 6; k++) { const y = 162 + Math.round(Math.pow(k / 6, 1.6) * 54); R(c, 0, y, W, 1, '#5f5b56'); }
+  for (let i = -8; i <= 8; i++) line(c, 192 + i * 20, 162, 192 + i * 60, 216, '#67635e');
+  frame(c, 40, 30, 54, 30, '#d9b45a', 2); R(c, 42, 32, 50, 26, '#33468a'); R(c, 44, 34, 46, 8, '#f4f4f4'); R(c, 44, 42, 46, 7, '#2f56b0'); R(c, 44, 49, 46, 7, '#c8343c');
+  R(c, 140, 22, 80, 14, '#26305a'); frame(c, 140, 22, 80, 14, '#d9b45a'); for (let i = 0; i < 6; i++) R(c, 150 + i * 10, 28, 6, 2, '#f4ead2');
+  R(c, 148, 62, 62, 10, '#9aa3b5'); R(c, 148, 62, 8, 104, '#9aa3b5'); R(c, 202, 62, 8, 104, '#9aa3b5'); R(c, 154, 70, 2, 96, '#6b7488'); R(c, 202, 70, 2, 96, '#6b7488'); R(c, 148, 62, 62, 2, '#c6cdda');
+  for (const x of [228, 262]) { R(c, x, 128, 10, 36, '#b8c0cc'); R(c, x, 128, 10, 3, '#6b7488'); R(c, x + 10, 140, 18, 3, '#d0d6de'); R(c, x + 2, 150, 6, 4, '#2f6b4f'); }
+  R(c, 296, 54, 88, 116, '#5b6b7a'); R(c, 300, 58, 84, 6, '#3f4b58');
+};
+BG.checkpointFg = function (c) {
+  c.globalAlpha = .38; R(c, 304, 66, 78, 52, '#8fb3c9'); c.globalAlpha = 1;
+  for (let i = 0; i < 4; i++) line(c, 310 + i * 14, 112, 330 + i * 14, 70, 'rgba(255,255,255,.35)');
+  frame(c, 302, 64, 82, 56, '#3f4b58', 2); R(c, 294, 120, 90, 10, '#4e2d1a'); R(c, 294, 120, 90, 2, '#7a4a2a'); R(c, 296, 130, 88, 40, '#3f4b58');
+  R(c, 318, 124, 20, 4, '#f4ecd8');
+};
+BG.lobby = function (c) {
+  grad(c, 0, 0, W, 152, ['#efe2c4','#dccaa0','#c8b07e']);
+  R(c, 0, 0, W, 6, '#b88a2e'); R(c, 0, 6, W, 2, '#8a6420');
+  R(c, 150, 24, 84, 128, '#6b4b2a'); ell(c, 192, 30, 42, 14, '#6b4b2a', 'top'); grad(c, 156, 34, 72, 118, ['#3a2a1a','#1b1426']); ell(c, 192, 36, 36, 10, '#3a2a1a', 'top'); frame(c, 150, 24, 84, 128, '#d9b45a', 2);
+  for (let y = 60; y < 150; y += 22) R(c, 160, y, 64, 1, '#4e3a28');
+  for (const x of [34, 112, 254, 332]) { R(c, x, 14, 20, 138, '#f2e9d6'); R(c, x + 15, 14, 5, 138, '#cbbd9e'); R(c, x + 2, 14, 2, 138, '#fffaf0'); R(c, x - 3, 10, 26, 7, '#d9b45a'); R(c, x - 3, 146, 26, 7, '#bfae8a'); for (let y = 24; y < 140; y += 10) R(c, x + 8, y, 1, 6, '#ddd2bb'); }
+  const painting = (x, y, w, h, seed) => { R(c, x - 4, y - 4, w + 8, h + 8, '#c99a3a'); frame(c, x - 4, y - 4, w + 8, h + 8, '#8a6420'); frame(c, x - 2, y - 2, w + 4, h + 4, '#f2d48a'); grad(c, x, y, w, Math.round(h * .55), ['#7fa3c8','#e8c58a']); grad(c, x, y + Math.round(h * .55), w, h - Math.round(h * .55), ['#5a7a3a','#3a5a2a']); const r = rng(seed); for (let i = 0; i < 6; i++) ell(c, x + r() * w, y + h * .55, 3 + r() * 4, 3, '#2f4a24', 'top'); R(c, x + w * .5, y + h * .5, 2, 6, '#6b4b2a'); ell(c, x + w * .5 + 1, y + h * .48, 5, 4, '#7a1e2e'); };
+  painting(64, 40, 36, 50, 3); painting(284, 40, 36, 50, 9);
+  // пол
+  for (let k = 0; k < 9; k++) { const y0 = 152 + Math.round(Math.pow(k / 9, 1.5) * 64), y1 = 152 + Math.round(Math.pow((k + 1) / 9, 1.5) * 64); const tw = 10 + k * 5; for (let x = -tw; x < W + tw; x += tw) R(c, x + (k % 2) * (tw >> 1), y0, tw >> 1, y1 - y0, ((x / tw) | 0) % 2 ? '#d8d2c6' : '#b8b0a2'); R(c, 0, y0, W, 1, '#a39b8d'); }
+  trap(c, 152, 216, 174, 210, 120, 264, '#9b2335'); trap(c, 152, 216, 172, 173, 116, 119, '#d9b45a'); trap(c, 152, 216, 211, 212, 265, 268, '#d9b45a');
+  line(c, 192, 0, 192, 10, '#8a6420'); ell(c, 192, 16, 22, 6, '#d9b45a'); ell(c, 192, 18, 16, 4, '#b88a2e'); for (let i = -3; i <= 3; i++) { R(c, 192 + i * 6, 8, 1, 4, '#f4ead2'); P(c, 192 + i * 6, 7, '#ffe08a'); }
+  R(c, 6, 150, 24, 30, '#33468a'); frame(c, 6, 150, 24, 30, '#d9b45a'); for (let y = 156; y < 176; y += 4) R(c, 10, y, 16, 2, '#c9d3ec');
+};
+BG.office = function (c) {
+  grad(c, 0, 0, W, 170, ['#1b2140','#232b52','#2b3460']);
+  R(c, 0, 170, W, 46, '#141a33'); for (let x = 0; x < W; x += 20) R(c, x, 170, 1, 46, '#1b2140');
+  R(c, 256, 22, 100, 92, '#4e2d1a'); grad(c, 260, 26, 92, 84, ['#0b0f26','#1b2350','#2b3a6e']);
+  ell(c, 336, 40, 6, 6, '#f4ead2'); ell(c, 338, 38, 5, 5, '#1b2350');
+  const r = rng(4); for (let i = 0; i < 8; i++) { const bh = 14 + r() * 34, bx = 260 + i * 12; R(c, bx, 110 - bh, 11, bh, '#121634'); for (let y = 112 - bh; y < 108; y += 5) for (let x = bx + 2; x < bx + 10; x += 4) if (r() < .45) R(c, x, y, 2, 2, '#ffcf6b'); }
+  R(c, 304, 26, 2, 84, '#4e2d1a'); R(c, 260, 66, 92, 2, '#4e2d1a');
+  R(c, 14, 24, 76, 136, '#4e2d1a'); for (let s = 0; s < 5; s++) { const y = 30 + s * 26; R(c, 18, y + 20, 68, 4, '#3a2010'); let x = 20; const rr = rng(s + 20); while (x < 82) { const w = 3 + Math.floor(rr() * 4), h = 12 + Math.floor(rr() * 8); R(c, x, y + 20 - h, w, h, ['#7a1e2e','#2f6b4f','#33468a','#c99a3a','#5d6788'][Math.floor(rr() * 5)]); R(c, x, y + 20 - h + 2, w, 1, '#d9b45a'); x += w + 1; } }
+  frame(c, 120, 30, 50, 34, '#c99a3a', 2); grad(c, 122, 32, 46, 30, ['#33468a','#7fa3c8']);
+};
+BG.officeFg = function (c, t) {
+  R(c, 60, 148, 210, 8, '#7a4a2a'); R(c, 60, 148, 210, 2, '#a8693a'); R(c, 66, 156, 198, 60, '#4e2d1a'); for (let x = 72; x < 260; x += 46) frame(c, x, 162, 38, 40, '#3a2010');
+  R(c, 96, 132, 2, 16, '#2a2a33'); trap(c, 124, 132, 92, 102, 88, 106, '#2f6b4f'); R(c, 90, 146, 14, 3, '#2a2a33'); dtrap(c, 133, 148, 90, 104, 70, 126, '#ffb347', .35);
+  R(c, 190, 132, 34, 14, '#2a2a33'); R(c, 192, 134, 30, 10, '#9fd3ff'); for (let y = 136; y < 143; y += 2) R(c, 194, y, 18 + (y % 4), 1, '#5fa3d8'); R(c, 186, 146, 42, 3, '#3a3a44');
+  for (let i = 0; i < 4; i++) { R(c, 140 + i, 140 - i * 2, 26, 8, '#f4ecd8'); R(c, 140 + i, 140 - i * 2, 26, 1, '#cfc4a8'); }
+  for (let y = 135; y < 145; y += 2) R(c, 146, y, 14, 1, '#9a917e');
+};
+function corridor(c, opt = {}) {
+  const vx = 192, vy = 100, bl = 172, br = 212, bt = 76, bb = 124;
+  trap(c, 0, bt, 0, W - 1, bl, br, (t) => t < .35 ? '#d9cfb4' : t < .7 ? '#c7bb9c' : '#b2a685');
+  for (const k of [.18, .45, .7]) { const y = Math.round(bt * k), l = bl * k, r = W - 1 - (W - 1 - br) * k; ell(c, Math.round((l + r) / 2), y + 2, Math.round((r - l) * .06) + 2, 2, '#fff1c4'); glow(c, Math.round((l + r) / 2), y + 4, 10 + Math.round(16 * (1 - k)), '#fff1c4', .35); }
+  trap(c, bb, 216, bl, br, -80, 464, (t) => t < .3 ? '#5a4232' : t < .65 ? '#6b5040' : '#7a5c48');
+  for (let i = -10; i <= 10; i++) line(c, vx + i * 3, bb, vx + i * 60, 216, '#4e3828');
+  for (let k = 0; k < 7; k++) { const y = bb + Math.round(Math.pow(k / 7, 2) * (216 - bb)); R(c, 0, y, W, 1, '#4e3828'); }
+  trap(c, bb, 216, 188, 196, 130, 254, '#8e1f2f'); trap(c, bb, 216, 187, 187, 127, 129, '#d9b45a'); trap(c, bb, 216, 197, 197, 255, 257, '#d9b45a');
+  const wall = (k, x) => { return null; };
+  vtrap(c, 0, bl - 1, 0, 216, bt, bb, (k) => k < .4 ? '#e6dcc0' : k < .75 ? '#d4c8a8' : '#beb190');
+  vtrap(c, br + 1, W - 1, bt, bb, 0, 216, (k) => k > .6 ? '#e6dcc0' : k > .25 ? '#d4c8a8' : '#beb190');
+  for (let x = 0; x < bl; x++) { const k = x / bl; const top = Math.round(bt * k), bot = Math.round(216 + (bb - 216) * k); const wl = Math.round(top + (bot - top) * .58); R(c, x, wl, 1, bot - wl, k < .4 ? '#7a4a2a' : k < .75 ? '#6b4026' : '#5a3520'); if (x % 2 === 0) P(c, x, wl, '#a8693a'); }
+  for (let x = br + 1; x < W; x++) { const k = (W - 1 - x) / (W - 1 - br); const top = Math.round(bt * k), bot = Math.round(216 + (bb - 216) * k); const wl = Math.round(top + (bot - top) * .58); R(c, x, wl, 1, bot - wl, k < .4 ? '#7a4a2a' : k < .75 ? '#6b4026' : '#5a3520'); if (x % 2 === 0) P(c, x, wl, '#a8693a'); }
+  const door = (side, k0, k1) => { for (let x0 = 0; x0 < 2; x0++) {} const xs = side < 0 ? [Math.round(bl * k0), Math.round(bl * k1)] : [Math.round(W - 1 - (W - 1 - br) * k0), Math.round(W - 1 - (W - 1 - br) * k1)]; const [xa, xb] = xs[0] < xs[1] ? xs : [xs[1], xs[0]]; for (let x = xa; x <= xb; x++) { const k = side < 0 ? x / bl : (W - 1 - x) / (W - 1 - br); const top = bt * k, bot = 216 + (bb - 216) * k; const dt = Math.round(top + (bot - top) * .2), db = Math.round(bot); const edge = x === xa || x === xb; R(c, x, dt, 1, db - dt, edge ? '#3a2010' : '#5e3820'); if (!edge && x === Math.round((xa + xb) / 2)) R(c, x, Math.round(dt + (db - dt) * .55), 1, 2, '#f2c14e'); } const xm = Math.round((xa + xb) / 2); const k = side < 0 ? xm / bl : (W - 1 - xm) / (W - 1 - br); const top = bt * k, bot = 216 + (bb - 216) * k; R(c, xm - 2, Math.round(top + (bot - top) * .12), 5, 2, '#d9b45a'); };
+  door(-1, .05, .2); door(-1, .42, .52); door(-1, .7, .76); door(1, .05, .2); door(1, .42, .52); door(1, .7, .76);
+  R(c, bl, bt, br - bl + 1, bb - bt + 1, '#b2a685'); R(c, 180, 84, 24, 40, '#4e2d1a'); R(c, 182, 86, 20, 38, opt.night ? '#2a1a10' : '#6b4026'); R(c, 191, 86, 2, 38, '#3a2010'); glow(c, 192, 104, 22, '#ffe7a8', .25);
+  if (opt.clock) { /* часы рисуются в dyn */ }
+}
+BG.corridor = function (c) { corridor(c); };
+BG.committee = function (c) {
+  grad(c, 0, 0, W, 132, ['#5d6788','#4e5876','#434b66']);
+  R(c, 0, 132, W, 84, '#3b3f52'); dith(c, 0, 132, W, 84, '#353849');
+  for (const x of [276, 330]) { R(c, x, 18, 46, 76, '#2a2f45'); R(c, x + 2, 20, 42, 72, '#cfe3f0'); for (let y = 22; y < 92; y += 4) R(c, x + 2, y, 42, 2, '#9fb6c8'); }
+  dtrap(c, 94, 132, 280, 370, 250, 384, '#cfe3f0', .18);
+  R(c, 26, 26, 96, 60, '#e9edf2'); frame(c, 26, 26, 96, 60, '#9aa3b5', 2); line(c, 34, 76, 54, 60, '#2f56b0'); line(c, 54, 60, 74, 66, '#2f56b0'); line(c, 74, 66, 96, 40, '#2f56b0'); line(c, 34, 78, 112, 78, '#5d6788'); for (let i = 0; i < 4; i++) R(c, 36 + i * 18, 34, 12, 3, '#c8343c');
+  R(c, 168, 10, 48, 30, '#2a2f45'); frame(c, 168, 10, 48, 30, '#d9b45a'); for (let y = 16; y < 36; y += 5) R(c, 174, y, 36, 2, '#9aa3b5');
+  for (const [x, w] of [[46, 26], [100, 26], [158, 26], [210, 26], [262, 26], [318, 26]]) { R(c, x, 96, w, 50, '#2f6b4f'); R(c, x + 2, 98, w - 4, 4, '#3f8a5a'); frame(c, x, 96, w, 50, '#1d4a35'); }
+};
+BG.committeeFg = function (c) {
+  ell(c, 192, 182, 172, 40, '#3a2010'); ell(c, 192, 178, 170, 38, '#7a4a2a'); ell(c, 192, 177, 162, 34, '#8a5530');
+  for (let i = 0; i < 6; i++) ell(c, 192, 178, 150 - i * 22, 30 - i * 5, i % 2 ? '#8a5530' : '#83502c');
+  const papers = [[70, 162], [130, 152], [196, 156], [258, 152], [310, 164], [160, 184], [240, 186]];
+  papers.forEach(([x, y], i) => { R(c, x, y, 22, 14, '#f4ecd8'); R(c, x, y + 13, 22, 1, '#cfc4a8'); for (let k = 0; k < 4; k++) R(c, x + 3, y + 3 + k * 3, 14 - (k * 3) % 7, 1, '#9a917e'); if (i === 2) { R(c, x + 2, y + 2, 4, 2, '#c8343c'); } });
+  for (const [x, y] of [[110, 166], [286, 168], [214, 176]]) { R(c, x, y, 5, 8, '#9fd3ff'); R(c, x, y, 5, 2, '#cfe9ff'); }
+  for (const [x, y] of [[176, 146], [92, 152], [290, 150]]) { trap(c, y, y + 6, x, x + 18, x - 2, x + 20, '#d9b45a'); R(c, x + 3, y + 2, 12, 1, '#7a5a1a'); }
+};
+function hallBase(c, opt = {}) {
+  grad(c, 0, 0, W, 112, ['#5a3a22','#4e2d1a','#3a2010']);
+  for (let x = 0; x < W; x += 32) { frame(c, x + 3, 6, 26, 60, '#6b4026'); R(c, x + 3, 70, 26, 36, '#43271a'); }
+  R(c, 110, 6, 164, 78, '#d9b45a'); R(c, 113, 9, 158, 72, '#f4f4f4'); R(c, 113, 33, 158, 24, '#2f56b0'); R(c, 113, 57, 158, 24, '#c8343c');
+  ell(c, 192, 44, 17, 19, '#8a6420'); ell(c, 192, 44, 15, 17, '#d9b45a'); ell(c, 192, 44, 9, 11, '#f2c14e'); ell(c, 192, 48, 5, 6, '#b88a2e'); R(c, 186, 30, 2, 6, '#f2d48a'); R(c, 197, 30, 2, 6, '#f2d48a');
+  for (const x of [16, 284]) { R(c, x, 14, 84, 54, '#5d6788'); R(c, x + 3, 17, 78, 48, '#0b1222'); }
+  R(c, 84, 84, 216, 30, '#6b3a22'); R(c, 84, 84, 216, 3, '#a8693a'); R(c, 84, 112, 216, 3, '#3a2010');
+  for (let x = 96; x < 290; x += 22) mini(c, x, 76, FURS[(x / 22 | 0) % FURS.length], '#7a1e2e');
+  R(c, 84, 84, 216, 3, '#a8693a'); for (let x = 88; x < 300; x += 20) R(c, x, 89, 12, 18, '#5a3520');
+  R(c, 174, 104, 36, 34, '#8a5530'); R(c, 174, 104, 36, 3, '#c98a4b'); R(c, 188, 116, 8, 8, '#d9b45a'); R(c, 192, 96, 1, 9, '#2a2a33'); R(c, 190, 95, 4, 2, '#2a2a33');
+  // ряды
+  grad(c, 0, 112, W, 104, ['#3a2a28','#2a1d1c']);
+  for (let i = 0; i < 6; i++) {
+    const rx = 70 + i * 40, ry = 26 + i * 15, cy = 112;
+    ell(c, 192, cy, rx, ry, '#5a3520', 'bottom'); ell(c, 192, cy - 4, rx - 2, ry - 4, i % 2 ? '#2e2120' : '#33241f', 'bottom');
+    for (let a = 0.12; a < Math.PI - 0.1; a += 0.42 - i * 0.04) { const x = 192 + Math.cos(a) * (rx - 8), y = cy + Math.sin(a) * (ry - 10) - 6; if (y < 116) continue; mini(c, Math.round(x - 3), Math.round(y), FURS[(i * 7 + Math.round(a * 10)) % FURS.length], '#9b2335'); }
+    const rr = rx, yy = ry; for (let x = -rr; x <= rr; x++) { const y = Math.round(cy + yy * Math.sqrt(Math.max(0, 1 - (x * x) / (rr * rr)))); if (y > 112) { P(c, 192 + x, y, '#a8693a'); P(c, 192 + x, y + 1, '#6b4026'); } }
+  }
+}
+BG.hall = function (c) { hallBase(c); };
+BG.hallFg = function (c) { R(c, 0, 158, W, 58, '#3a2010'); R(c, 0, 156, W, 4, '#a8693a'); R(c, 0, 160, W, 2, '#6b4026'); for (let x = 4; x < W; x += 12) { R(c, x, 162, 4, 54, '#6b4026'); R(c, x + 1, 162, 1, 54, '#8a5530'); } R(c, 0, 176, W, 3, '#a8693a'); };
+BG.board = function (c) {
+  hallBase(c); c.globalAlpha = .55; R(c, 0, 0, W, H, '#0b0812'); c.globalAlpha = 1;
+  R(c, 52, 14, 280, 150, '#5d6788'); R(c, 56, 18, 272, 142, '#070b16'); frame(c, 52, 14, 280, 150, '#9aa3b5');
+  for (let y = 20; y < 158; y += 3) R(c, 58, y, 268, 1, '#0b1222');
+};
+BG.council = function (c) {
+  grad(c, 0, 0, W, 120, ['#1a2f5a','#1f3b6e','#16294d']);
+  ell(c, 192, 0, 120, 46, '#2a4a86', 'bottom'); ell(c, 192, 0, 112, 40, '#1a2f5a', 'bottom'); for (let a = 0.2; a < Math.PI; a += 0.25) line(c, 192, 0, 192 + Math.cos(a) * 112, Math.sin(a) * 40, '#2a4a86');
+  for (const x of [22, 70, 300, 348]) { R(c, x, 20, 16, 100, '#e8ecf4'); R(c, x + 12, 20, 4, 100, '#b9c2d6'); R(c, x - 2, 16, 20, 5, '#d9b45a'); }
+  R(c, 120, 50, 144, 44, '#dfe6f0'); frame(c, 120, 50, 144, 44, '#d9b45a', 2); R(c, 124, 54, 136, 12, '#f4f4f4'); R(c, 124, 66, 136, 12, '#2f56b0'); R(c, 124, 78, 136, 12, '#c8343c');
+  grad(c, 0, 120, W, 96, ['#16294d','#0f1d38']);
+  for (let i = 0; i < 5; i++) { const rx = 80 + i * 42, ry = 24 + i * 15; ell(c, 192, 118, rx, ry, '#dfe6f0', 'bottom'); ell(c, 192, 115, rx - 2, ry - 4, '#16294d', 'bottom'); for (let a = 0.15; a < Math.PI - 0.1; a += 0.4 - i * 0.04) { const x = 192 + Math.cos(a) * (rx - 8), y = 118 + Math.sin(a) * (ry - 10) - 6; if (y < 122) continue; mini(c, Math.round(x - 3), Math.round(y), FURS[(i * 5 + Math.round(a * 9)) % FURS.length], '#2f56b0'); } }
+  ell(c, 192, 10, 64, 6, '#d9b45a'); ell(c, 192, 10, 58, 4, '#1f3b6e'); for (let a = 0; a < Math.PI * 2; a += .35) P(c, 192 + Math.cos(a) * 61, 10 + Math.sin(a) * 5, '#fff1c4');
+};
+BG.councilFg = function (c) { R(c, 152, 138, 80, 50, '#dfe6f0'); R(c, 152, 138, 80, 3, '#ffffff'); frame(c, 152, 138, 80, 50, '#9aa3b5'); R(c, 186, 148, 12, 10, '#d9b45a'); };
+BG.cabinet = function (c) {
+  R(c, 0, 0, W, H, '#4e2d1a'); for (let x = 0; x < W; x += 40) { frame(c, x + 4, 8, 32, 52, '#6b4026', 2); frame(c, x + 4, 66, 32, 60, '#6b4026', 2); }
+  R(c, 0, 0, W, 6, '#3a2010'); R(c, 0, 126, W, 4, '#3a2010');
+  R(c, 268, 18, 92, 100, '#2a1a10'); grad(c, 272, 22, 84, 92, ['#05081a','#121a40','#22305e']); const r = rng(7); for (let i = 0; i < 30; i++) P(c, 272 + r() * 84, 22 + r() * 50, '#f4ead2');
+  for (const [x, h] of [[278, 22], [292, 30], [306, 46], [322, 26], [338, 36]]) { R(c, x, 114 - h, 10, h, '#0a0d22'); for (let k = 0; k < 3; k++) R(c, x + k * 4, 112 - h, 2, 3, '#0a0d22'); } trap(c, 60, 68, 309, 309, 304, 314, '#0a0d22'); P(c, 309, 58, '#c8343c');
+  R(c, 312, 18, 4, 100, '#2a1a10'); R(c, 268, 66, 92, 3, '#2a1a10');
+  R(c, 38, 22, 3, 150, '#c9a65a'); ell(c, 39, 21, 3, 3, '#f2c14e'); for (let y = 0; y < 48; y++) { const w = 20 + Math.round(Math.sin(y / 5) * 2); R(c, 41, 26 + y, w, 1, y < 16 ? '#f4f4f4' : y < 32 ? '#2f56b0' : '#c8343c'); if (y % 6 === 0) R(c, 41 + w - 3, 26 + y, 2, 1, 'rgba(0,0,0,.2)'); }
+  R(c, 0, 172, W, 44, '#3a2414'); dith(c, 0, 172, W, 44, '#2e1d10'); trap(c, 172, 216, 120, 264, 60, 324, '#7a1e2e');
+};
+BG.cabinetFg = function (c) {
+  R(c, 70, 132, 244, 10, '#3a2414'); R(c, 70, 132, 244, 2, '#6b4026'); R(c, 92, 133, 200, 7, '#2f6b4f'); R(c, 76, 142, 232, 74, '#4e2d1a'); for (let x = 84; x < 300; x += 56) frame(c, x, 150, 48, 56, '#3a2010', 2);
+  R(c, 104, 112, 2, 20, '#c9a65a'); trap(c, 104, 113, 96, 112, 92, 116, '#2f6b4f'); R(c, 98, 130, 14, 3, '#c9a65a'); dtrap(c, 114, 132, 94, 114, 80, 132, '#ffcf6b', .3);
+  R(c, 168, 122, 48, 12, '#f4ecd8'); for (let k = 0; k < 3; k++) R(c, 172, 124 + k * 3, 30, 1, '#9a917e'); ell(c, 208, 130, 3, 3, '#c8343c'); line(c, 222, 120, 236, 132, '#1b1426'); P(c, 222, 120, '#d9b45a');
+};
+BG.print = function (c) {
+  grad(c, 0, 0, W, 170, ['#ede8dc','#ddd6c6','#cfc8b8']); R(c, 0, 170, W, 46, '#9a948a'); for (let x = 0; x < W; x += 24) R(c, x, 170, 1, 46, '#8a8478'); R(c, 0, 186, W, 1, '#8a8478');
+  R(c, 18, 70, 130, 110, '#5d6788'); R(c, 18, 70, 130, 4, '#7d88a8'); R(c, 26, 82, 114, 40, '#4a5470');
+  for (const [x, y, r] of [[44, 140, 14], [84, 140, 14], [124, 140, 14]]) { ell(c, x, y, r, r, '#2a2a33'); ell(c, x, y, r - 3, r - 3, '#6b7488'); ell(c, x, y, 3, 3, '#2a2a33'); }
+  R(c, 30, 160, 106, 20, '#3a4258'); R(c, 60, 30, 46, 40, '#f4ecd8'); for (let y = 36; y < 66; y += 4) R(c, 64, y, 36, 1, '#9a917e');
+  R(c, 208, 26, 156, 118, '#2a2a33'); R(c, 212, 30, 148, 106, '#f4f6fb'); R(c, 212, 30, 148, 12, '#26305a'); for (let i = 0; i < 3; i++) R(c, 216 + i * 6, 34, 4, 4, ['#c8343c','#f2c14e','#6fd08c'][i]);
+  R(c, 220, 50, 80, 4, '#26305a'); for (let y = 60; y < 130; y += 6) R(c, 220, y, 60 + (y * 7) % 70, 2, '#b9c2d6');
+  R(c, 312, 50, 40, 46, '#e3e8f2'); frame(c, 312, 50, 40, 46, '#9aa3b5'); R(c, 280, 144, 12, 10, '#2a2a33'); R(c, 266, 154, 40, 4, '#2a2a33');
+  for (let i = 0; i < 5; i++) { R(c, 160, 172 - i * 4, 34, 4, i % 2 ? '#e8e0cc' : '#f4ecd8'); R(c, 160, 172 - i * 4, 34, 1, '#bdb39a'); }
+};
+BG.yard = function (c, alt) {
+  grad(c, 0, 0, W, 130, alt ? ['#e8b07a','#f2d1a2','#f6e6c8'] : ['#6fa5dc','#a9cdee','#dcebf6']);
+  const block = (x, y, w, h, col, seed) => { R(c, x, y, w, h, col); R(c, x, y, w, 4, '#8a8478'); windowsGrid(c, x + 6, y + 10, Math.floor((w - 8) / 14), Math.floor((h - 14) / 22), 8, 10, 14, 22, seed, .15, '#ffcf6b', '#5b7aa0', '#6b6458'); for (let j = 0; j < Math.floor((h - 14) / 22); j++) for (let i = 0; i < Math.floor((w - 8) / 28); i++) R(c, x + 4 + i * 28, y + 21 + j * 22, 14, 4, '#9c9487'); };
+  block(150, 54, 90, 90, '#cbbfa6', 3); block(-20, 30, 160, 140, '#d6cdb8', 1); block(250, 36, 160, 134, '#c9c2b2', 2);
+  R(c, 0, 168, W, 48, '#6f6b70'); dith(c, 0, 168, W, 48, '#67636a'); ell(c, 300, 200, 26, 4, '#8fb3d9'); ell(c, 90, 206, 18, 3, '#8fb3d9');
+  R(c, 0, 166, W, 3, '#4f4b52');
+  R(c, 40, 140, 2, 30, '#c8343c'); R(c, 76, 140, 2, 30, '#c8343c'); R(c, 40, 140, 38, 2, '#c8343c'); line(c, 52, 142, 50, 160, '#2a2a33'); line(c, 62, 142, 64, 160, '#2a2a33'); R(c, 48, 160, 18, 3, '#f2c14e');
+  R(c, 300, 158, 50, 4, '#7a4a2a'); R(c, 300, 152, 50, 3, '#7a4a2a'); R(c, 304, 162, 3, 8, '#3a2a2a'); R(c, 342, 162, 3, 8, '#3a2a2a');
+  R(c, 246, 120, 2, 50, '#3a3a44'); R(c, 230, 112, 34, 14, '#2f6b4f'); frame(c, 230, 112, 34, 14, '#f4f4f4'); pnum(c, '7', 252, 116, 1, '#f4f4f4'); R(c, 234, 116, 14, 2, '#f4f4f4'); R(c, 234, 120, 10, 2, '#f4f4f4');
+  tree(c, 120, 168, 8, ['#f2c14e','#e8a33a','#d9762b']); tree(c, 360, 170, 12, ['#e8a33a','#c8343c','#f2c14e']);
+};
+BG.boardroom = function (c) {
+  grad(c, 0, 0, W, 170, ['#1b1726','#221c30','#1b1726']); R(c, 0, 170, W, 46, '#141019'); dith(c, 0, 170, W, 46, '#1b1622');
+  R(c, 56, 16, 272, 112, '#6b4026'); R(c, 60, 20, 264, 104, '#b07a45'); dith(c, 60, 20, 264, 104, '#a06a38');
+  const cards = [[74, 30, '#f4ecd8'], [140, 28, '#f2e08a'], [210, 34, '#f4ecd8'], [270, 30, '#f2e08a'], [90, 80, '#f4ecd8'], [168, 76, '#f4ecd8'], [236, 82, '#f2e08a'], [292, 78, '#f4ecd8']];
+  const pins = cards.map(([x, y, col], i) => { R(c, x, y, 30, 22, col); R(c, x + 2, y + 2, 26, 6, i % 3 ? '#cfc4a8' : '#9fd3ff'); for (let k = 0; k < 3; k++) R(c, x + 3, y + 11 + k * 3, 22 - k * 4, 1, '#7a6a52'); ell(c, x + 15, y + 1, 1, 1, '#c8343c'); return [x + 15, y + 1]; });
+  [[0, 1], [1, 5], [5, 2], [2, 3], [3, 7], [4, 5], [6, 7], [1, 6]].forEach(([a, b], i) => line(c, pins[a][0], pins[a][1], pins[b][0], pins[b][1], i % 3 === 2 ? '#f2c14e' : '#e0485a'));
+};
+BG.boardroomFg = function (c) { R(c, 120, 182, 150, 8, '#3a2414'); R(c, 120, 182, 150, 2, '#6b4026'); R(c, 130, 190, 6, 26, '#2a1a10'); R(c, 254, 190, 6, 26, '#2a1a10'); R(c, 150, 168, 2, 14, '#2a2a33'); trap(c, 160, 168, 144, 158, 140, 162, '#2f6b4f'); dtrap(c, 169, 182, 142, 160, 126, 176, '#ffcf6b', .35); };
+function archive(c, desk) {
+  grad(c, 0, 0, W, H, ['#0b0f22','#141a33','#0b0f22']);
+  const vx = 192, vy = 92;
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 6; k++) {
+      const d0 = k / 6, d1 = (k + .85) / 6;
+      const x0 = side < 0 ? Math.round(150 * d0) : Math.round(W - 150 * d0), x1 = side < 0 ? Math.round(150 * d1) : Math.round(W - 150 * d1);
+      const top0 = Math.round(0 + (vy - 50) * d0), bot0 = Math.round(216 - (216 - vy - 40) * d0), top1 = Math.round((vy - 50) * d1), bot1 = Math.round(216 - (216 - vy - 40) * d1);
+      const [xa, xb, ta, ba, tb, bb] = side < 0 ? [x0, x1, top0, bot0, top1, bot1] : [x1, x0, top1, bot1, top0, bot0];
+      vtrap(c, xa, xb, ta, ba, tb, bb, '#2a2f4a');
+      for (let s = 1; s < 7; s++) { const f = s / 7; for (let x = xa; x <= xb; x++) { const kk = (x - xa) / ((xb - xa) || 1); const t = ta + (tb - ta) * kk, b = ba + (bb - ba) * kk; const y = Math.round(t + (b - t) * f); P(c, x, y, '#5d6788'); if ((x + s * 3 + k) % 5 < 3) { const bh = Math.max(2, Math.round((b - t) / 7) - 2); R(c, x, y - bh, 1, bh, ['#c99a3a','#9a8a6a','#7a6a52','#b07a45'][(x + s + k) % 4]); } } }
+    }
+  }
+  R(c, 160, 70, 64, 80, '#060914'); for (let k = 0; k < 4; k++) dtrap(c, 0, 216, 168 + k * 14, 172 + k * 14, 130 + k * 40, 150 + k * 40, '#9fd3ff', .08);
+  R(c, 0, 176, W, 40, '#0f1428'); trap(c, 150, 216, 170, 214, 60, 324, '#141a33');
+  if (desk) { R(c, 90, 168, 204, 8, '#6b4026'); R(c, 90, 168, 204, 2, '#a8693a'); R(c, 96, 176, 6, 40, '#3a2010'); R(c, 282, 176, 6, 40, '#3a2010'); for (const [x, col] of [[120, '#c99a3a'], [200, '#5d6788']]) { R(c, x, 156, 56, 12, col); R(c, x + 2, 152, 52, 6, '#f4ecd8'); frame(c, x, 156, 56, 12, '#3a2010'); } }
+}
+BG.archive = function (c) { archive(c, false); };
+BG.archdesk = function (c) { archive(c, true); };
+BG.docworld = function (c) {
+  grad(c, 0, 0, W, 80, ['#0f1330','#1b2140','#33468a']);
+  const r = rng(2); for (let i = 0; i < 20; i++) { const x = r() * W, y = r() * 60; P(c, x, y, '#9fd3ff'); }
+  trap(c, 80, 216, 160, 224, -120, 504, (t) => t < .3 ? '#d8ccaa' : t < .6 ? '#e6dabb' : '#efe3c4');
+  for (let k = 1; k < 14; k++) { const t = Math.pow(k / 14, 1.7); const y = Math.round(80 + t * 136); const l = 160 + (-120 - 160) * t, rr = 224 + (504 - 224) * t; let x = l + 6; const rs = rng(k * 9); while (x < rr - 6) { const w = (8 + rs() * 30) * (0.2 + t); R(c, x, y, w, Math.max(1, Math.round(t * 3)), '#9a917e'); x += w + (3 + rs() * 6) * (0.3 + t); } }
+  glyph(c, 'З', 10, 40, 9, '#f4ecd8', '#6b5a3a'); glyph(c, 'А', 62, 62, 6, '#efe3c4', '#6b5a3a'); glyph(c, 'К', 302, 52, 7, '#efe3c4', '#6b5a3a'); glyph(c, 'О', 338, 30, 8, '#f4ecd8', '#6b5a3a'); glyph(c, 'Н', 260, 72, 4, '#e6dabb', '#6b5a3a'); glyph(c, '§', 112, 74, 3, '#e6dabb', '#6b5a3a');
+};
+BG.hub = function (c) {
+  grad(c, 0, 0, W, H, ['#0d0f20','#1b1830','#141226']);
+  ell(c, 192, 196, 170, 26, '#232042'); ell(c, 192, 196, 140, 20, '#1b1830'); ell(c, 192, 196, 100, 14, '#232042'); ell(c, 192, 196, 60, 8, '#2a2650');
+  const door = (x, col, lab) => { R(c, x - 2, 58, 52, 96, '#0a0a16'); ell(c, x + 24, 60, 26, 16, '#0a0a16', 'top'); R(c, x, 60, 48, 92, '#1b1426'); ell(c, x + 24, 62, 24, 14, '#1b1426', 'top'); frame(c, x, 60, 48, 92, col, 2); glow(c, x + 24, 110, 34, col, .3); pnum(c, lab, x + 20, 26, 3, col); };
+  door(52, '#ffb347', '1'); door(168, '#7fd6ff', '2'); door(284, '#6fd08c', '3');
+};
+BG.blueprint = function (c) {
+  R(c, 0, 0, W, H, '#16306a'); for (let x = 0; x < W; x += 12) R(c, x, 0, 1, H, '#1d3c80'); for (let y = 0; y < H; y += 12) R(c, 0, y, W, 1, '#1d3c80');
+  const box = (x, y, w, h) => { frame(c, x, y, w, h, '#cfe3f0'); R(c, x + 2, y + 2, w - 4, 2, '#9fc0e0'); };
+  box(20, 30, 60, 30); box(110, 30, 60, 30); box(200, 30, 60, 30); box(290, 30, 70, 30); box(110, 100, 60, 30); box(200, 100, 60, 30); box(290, 100, 70, 30);
+  for (const [a, b, y] of [[80, 110, 45], [170, 200, 45], [260, 290, 45]]) { R(c, a, y, b - a, 1, '#cfe3f0'); P(c, b - 2, y - 1, '#cfe3f0'); P(c, b - 2, y + 1, '#cfe3f0'); }
+  for (const x of [140, 230, 324]) { R(c, x, 60, 1, 40, '#f2c14e'); }
+  R(c, 0, 176, W, 40, '#10234f');
+};
+BG.final = function (c) { grad(c, 0, 0, W, H, ['#05060f','#0d1024','#141a33']); };
+
+/* ================= ДИНАМИКА СЦЕН ================= */
+const DYN = {
+  leaves(c, t, n = 18, cols = ['#f2c14e','#e8a33a','#d9762b','#c8343c']) { for (let i = 0; i < n; i++) { const s = (i * 9301 + 49297) % 233280 / 233280; const y = ((s * H + t * (0.012 + s * .01)) % (H + 20)) - 10; const x = (s * 997 % W + Math.sin(t / 700 + i) * 10 + t * .004 * (i % 3)) % W; R(c, x, y, 2, 1 + (i % 2), cols[i % cols.length]); } },
+  dust(c, t, n = 40, col = '#9fd3ff') { for (let i = 0; i < n; i++) { const s = ((i * 7919) % 1000) / 1000; const x = (s * W + Math.sin(t / 2000 + i) * 8) % W; const y = (((1 - s) * H - t * .004 * (1 + i % 3)) % H + H) % H; if ((Math.floor(t / 300) + i) % 4) P(c, x, y, col); } },
+  flag(c, t, x, y) { const cols = ['#f4f4f4','#2f56b0','#c8343c']; for (let i = 0; i < 18; i++) { const dy = Math.round(Math.sin(t / 220 - i / 3) * 1.5); for (let k = 0; k < 3; k++) R(c, x + i, y + k * 4 + dy, 1, 4, cols[k]); } },
+  sec: (t) => Math.floor(t / 1000) % 60,
+  sheets(c, t) { for (let i = 0; i < 6; i++) { const p = ((t / 2400 + i / 6) % 1); const x = 70 + p * 250 + Math.sin(p * 9 + i) * 10, y = 60 - Math.sin(p * Math.PI) * 50 + i * 6; R(c, x, y, 10, 7, '#f4ecd8'); R(c, x, y + 6, 10, 1, '#cfc4a8'); } },
+  birds(c, t) { for (let i = 0; i < 3; i++) { const x = (t * .02 + i * 90) % (W + 40) - 20, y = 20 + i * 9 + Math.sin(t / 300 + i) * 2; const f = Math.floor(t / 200 + i) % 2; P(c, x, y, '#2a2a33'); P(c, x - 1, y - f, '#2a2a33'); P(c, x + 1, y - f, '#2a2a33'); P(c, x - 2, y - 1 + f, '#2a2a33'); P(c, x + 2, y - 1 + f, '#2a2a33'); } }
+};
+
+</script>
+<script>
+/* ================= ИГРА 3 · «КАБИНЕТ» ================= */
+const GAME = { title: 'Кабинет', country: 'Мурландия', weeks: 40, budgetWeek: 10, crisisWeek: 22 };
+// шкалы: kz казна · dv доверие · sv свобода · bz безопасность · ek экономика · el элиты · kr коррупция (скрытая)
+const STATS = [
+  { k: 'kz', n: 'Казна', s: 'Казна', lo: 'default', hi: 'hoard' },
+  { k: 'dv', n: 'Доверие', s: 'Доверие', lo: 'street', hi: 'cult' },
+  { k: 'sv', n: 'Свобода', s: 'Свобода', lo: 'silence', hi: 'anarchy' },
+  { k: 'bz', n: 'Безопасность', s: 'Безоп.', lo: 'emergency', hi: 'barracks' },
+  { k: 'ek', n: 'Экономика', s: 'Эконом.', lo: 'crash', hi: 'bubble' },
+  { k: 'el', n: 'Элиты', s: 'Элиты', lo: 'plot', hi: 'hostage' }
+];
+const ROLES = {
+  min: { n: 'Министр', full: 'Министр экономики и благоустройства', who: 'min', bg: 'office', can: 'Распределяет бюджет ведомства, готовит постановления, назначает заместителей.', cant: 'Не принимает законы. Против президента идёт только ценой отставки.', twist: 'Отчёты можно приукрасить. Правда всплывает позже.' },
+  dep: { n: 'Депутат', full: 'Депутат фракции «Тёплая батарея»', who: 'dep', bg: 'office', can: 'Голосует, вносит законопроекты и поправки, пишет запросы, договаривается с коллегами.', cant: 'Ничего не решает в одиночку: для закона нужно 226 голосов из 450.', twist: 'Голоса собираются сделками. Невыполненные обещания помнят.' },
+  pres: { n: 'Президент', full: 'Президент Мурландии', who: 'pres', bg: 'cabinet', can: 'Подписывает или отклоняет законы, назначает премьера, издаёт указы.', cant: 'Не принимает законы без парламента. Вето преодолевается двумя третями.', twist: 'Информация приходит через советников. Не все доклады честные.' }
+};
+
+/* ================= ПЕРСОНАЖИ ================= */
+const PL = (F, S, R, extra) => Object.assign({ F, S, s: S, T: '#efe6d6', R }, extra || {});
+const CH = {
+  min: { name: 'Вы', role: 'Министр', bg: '#2a3a5a', pal: PL('#c98a4b', '#2a3a5a', '#c8343c', { M: '#8d5a2a', X: '#d9b45a' }), feat: ['tabby', 'pin'] },
+  dep: { name: 'Вы', role: 'Депутат', bg: '#4a2a2a', pal: PL('#d8d2c8', '#5a4030', '#2f6b4f', { X: '#d9b45a' }), feat: ['pin'] },
+  pres: { name: 'Вы', role: 'Президент', bg: '#1f2233', pal: PL('#a7a9b3', '#1f2233', '#7a1e2e', { E: '#e8c14b' }), feat: [] },
+  gub: { name: 'Губернатор Тигранов', role: 'Северная область', bg: '#3a3a2a', pal: PL('#e58a3a', '#5d6370', '#7a1e2e', { M: '#a84f1c', X: '#d9b45a' }), feat: ['tabby', 'pin'] },
+  asya: { name: 'Ася Полосатая', role: 'Журналист, «Вечерний Хвост»', bg: '#4a4030', pal: PL('#9a9286', '#c8a878', '#c8a878', { D: '#77705f', L: '#d8d2c4', E: '#e8c14b', T: '#efe3c4', M: '#5a5248' }), feat: ['tabby', 'press', 'notebook', 'belt'] },
+  seifov: { name: 'Аристарх Сейфов', role: 'Первый Мурландский банк', bg: '#5a4a2a', pal: PL('#f6f3ee', '#e7dcc2', '#d9a43a', { D: '#d8d2c8', L: '#ffffff', P: '#f2a8b8', E: '#5fb3e8', s: '#c8bb9c', T: '#ffffff', Q: '#6b4a2a', X: '#f2c14e' }), feat: ['ruff', 'briefcase'] },
+  murka: { name: 'Мурка Пушистова', role: 'Лидер протеста против тарифов', bg: '#2c4a38', pal: PL('#e58a3a', '#3f8a5a', '#3f8a5a', { D: '#b9642a', L: '#f6d2a6', E: '#7fd36a', s: '#2c6a44', T: '#3f8a5a', M: '#a84f1c' }), feat: ['tabby', 'strings'] },
+  ten: { name: 'Полковник Тень', role: 'Служба безопасности', bg: '#1f2a1f', pal: PL('#5a5248', '#3a4a3a', '#2a362a', { D: '#433d35', L: '#8a8276', E: '#d0d04b', s: '#2a362a', T: '#3a4a3a', H: '#2a362a', V: '#141a14', X: '#c8343c' }), feat: ['cap', 'belt'] },
+  dvor: { name: 'Тихон Дворовый', role: 'Оппозиция, «Дворовый фронт»', bg: '#4a1a22', pal: PL('#26232e', '#a8323e', '#a8323e', { D: '#17151d', L: '#f1ede4', E: '#9ad04b', s: '#7c2430', T: '#a8323e', Y: '#e59aa8' }), feat: ['tux', 'scar'] },
+  kogtev: { name: 'Аркадий Когтев', role: 'Глава Администрации президента', bg: '#24131a', pal: PL('#26232e', '#141219', '#7a1e2e', { D: '#17151d', L: '#3a3644', E: '#e8c14b', s: '#0b0a10', X: '#c8343c' }), feat: ['pin'] },
+  it: { name: 'Кузя Мурчатов', role: 'Основатель мессенджера «Мурчат»', bg: '#1a2a3a', pal: PL('#f2f2f2', '#1b1b22', '#1b1b22', { D: '#cfcfcf', L: '#ffffff', E: '#6fd0ff', M: '#9a9286', T: '#1b1b22' }), feat: ['glasses', 'strings'] },
+  doc: { name: 'Доктор Пилюлькина', role: 'Главврач областной больницы', bg: '#2a3a3a', pal: PL('#efe0c4', '#f4f4f4', '#c8343c', { D: '#cdb894', L: '#5a3a2e', P: '#5a3a2e', E: '#6fb7e8', s: '#d8d8d8', T: '#f4f4f4', M: '#5a3a2e' }), feat: ['mask', 'glasses'] },
+  gen: { name: 'Генерал Когтеброд', role: 'Министерство обороны', bg: '#2a3320', pal: PL('#9a9286', '#4a5a2a', '#4a5a2a', { D: '#77705f', E: '#e8c14b', s: '#3a4a1f', T: '#4a5a2a', H: '#3a4a1f', V: '#1f2a10', X: '#f2c14e' }), feat: ['cap', 'belt', 'pin'] },
+  union: { name: 'Степан Угольков', role: 'Профсоюз шахтёров', bg: '#2a2a2a', pal: PL('#5a5248', '#33468a', '#33468a', { D: '#433d35', E: '#e8c14b', s: '#24346a', T: '#33468a', H: '#e8c14b', V: '#8a6a10', M: '#2a2622' }), feat: ['cap', 'tabby'] },
+  blog: { name: 'Лиза Лайкова', role: 'Блогер, 5 млн подписчиков', bg: '#4a2a4a', pal: PL('#f6f3ee', '#e05aa0', '#e05aa0', { L: '#ffffff', P: '#f2a8b8', E: '#9a6fd0', s: '#b0407a', T: '#e05aa0', M: '#e58a3a' }), feat: ['tabby', 'strings'] },
+  amb: { name: 'Посол Бархатов', role: 'Соседняя Республика', bg: '#1a2a4a', pal: PL('#6f7f99', '#2f56b0', '#f2c14e', { D: '#566480', L: '#a9b7cc', E: '#9ad04b', s: '#21408a', X: '#f2c14e' }), feat: ['pin', 'briefcase'] },
+  baba: { name: 'Агриппина Ангорская', role: 'Пенсионерка', bg: '#3a2a3a', pal: PL('#f6f3ee', '#7a4a6a', '#7a4a6a', { D: '#d8d2c8', L: '#ffffff', E: '#6fb7e8', s: '#5a3450', T: '#7a4a6a' }), feat: ['ruff', 'glasses'] },
+  mayor: { name: 'Мэр Котлеткин', role: 'Мэр столицы', bg: '#3a2a1a', pal: PL('#d8c27a', '#6b4a2e', '#c8343c', { D: '#b39c56', L: '#efe2b4', E: '#8fb04b', s: '#4e331d', X: '#d9b45a' }), feat: ['pin'] },
+  stat: { name: 'Цифиркин', role: 'Глава Статистической службы', bg: '#2a2a3a', pal: PL('#8d93a6', '#4a4f62', '#5d6788', { D: '#6a6f82', L: '#c9ccd6', E: '#e8c14b', s: '#363a4a', G: '#c9ccd6' }), feat: ['glasses', 'papers'] },
+  director: { name: 'Режиссёр Мяукин', role: 'Театр «Хвост»', bg: '#3a1a2a', pal: PL('#26232e', '#2a2a2a', '#c8343c', { D: '#17151d', L: '#f1ede4', E: '#f2c14e', s: '#1a1a1a', T: '#2a2a2a', H: '#1a1a1a', V: '#0a0a0a' }), feat: ['tux', 'cap'] },
+  lobby: { name: 'Феликс Ангорский', role: 'Ассоциация производителей валерьянки', bg: '#5a4a2a', pal: PL('#f6f3ee', '#2f6b4f', '#d9a43a', { D: '#d8d2c8', L: '#ffffff', P: '#f2a8b8', E: '#5fb3e8', s: '#1f4a35', Q: '#6b4a2a', X: '#f2c14e' }), feat: ['ruff', 'briefcase'] },
+  colleague: { name: 'Борис Барсуков', role: 'Ваш давний коллега', bg: '#3a3020', pal: PL('#9a9286', '#6b6f7a', '#c8343c', { D: '#77705f', M: '#5a5248', s: '#50545e' }), feat: ['tabby', 'pin'] },
+  cik: { name: 'Глава избиркома', role: 'Центральная избирательная комиссия', bg: '#2a2a40', pal: PL('#efe0c4', '#33468a', '#f4f4f4', { D: '#cdb894', L: '#5a3a2e', P: '#5a3a2e', E: '#6fb7e8', s: '#24346a', M: '#5a3a2e' }), feat: ['mask', 'papers'] },
+  zam: { name: 'Заместитель Шустров', role: 'Ваш заместитель', bg: '#2a2a2a', pal: PL('#5a5248', '#3a3a44', '#d9a43a', { D: '#433d35', E: '#9ad04b', s: '#26262e' }), feat: ['glasses'] },
+  pr: { name: 'Пиарщик Хайпов', role: 'Консультант', bg: '#2a1a3a', pal: PL('#e8e2d6', '#9a6fd0', '#1b1b22', { L: '#ffffff', E: '#6fb7e8', s: '#6a4a9a', M: '#9a9286' }), feat: ['tabby', 'glasses'] },
+  minfin: { name: 'Министр финансов Рублёв', role: 'Правительство', bg: '#1a3a2a', pal: PL('#a7a9b3', '#1f4a35', '#f2c14e', { D: '#878995', E: '#9ad04b', s: '#153526' }), feat: ['glasses', 'papers'] },
+  pm: { name: 'Председатель правительства', role: 'Правительство', bg: '#1f2233', pal: PL('#8d93a6', '#1f2233', '#2f56b0', { E: '#e8c14b' }), feat: ['pin'] },
+  presx: { name: 'Президент', role: 'Глава государства', bg: '#1f2233', pal: PL('#a7a9b3', '#1f2233', '#7a1e2e', { E: '#e8c14b' }), feat: [] },
+  speaker: { name: 'Пушистая-Мягкова', role: 'Председатель парламента', bg: '#3a1f4a', pal: PL('#f6f3ee', '#6a3a8a', '#c9a65a', { D: '#d8d2c8', L: '#ffffff', P: '#f2a8b8', E: '#9a6fd0', s: '#4e2a66', T: '#f4f4f4' }), feat: ['ruff'] },
+  adviser: { name: 'Советник Гладкий', role: 'Помощник президента', bg: '#2a2a3a', pal: PL('#f6f3ee', '#2a2f45', '#c9a65a', { L: '#ffffff', E: '#6fb7e8', s: '#1c2030' }), feat: ['glasses'] },
+  anon: { name: 'Неизвестный', role: 'Телефонный звонок', bg: '#111', pal: PL('#26232e', '#141219', '#141219', { E: '#9aa3b5', L: '#3a3644' }), feat: [] },
+  narr: { name: '', role: '' }
+};
+
+/* ================= КОЛОДА ================= */
+// type: office (к вам в кабинет) · rounds (вы по кабинетам) · meeting (на собрании) · event
+// o: варианты; e — эффекты; later — отложенное последствие {in, t, x, e}; set — флаг; vote — голоса за этот вариант
+const DECK = [
+ { id: 'bridge', type: 'office', who: 'gub', t: 'Мост', x: '«У нас в области мост треснул. Дайте денег, или к весне будет беда». Смета — четыре миллиарда. Цифра выглядит круглой.',
+   o: [ { l: 'Выделить из резерва', e: { kz: -8, dv: 4, kr: 5 } },
+        { l: 'Сначала независимая проверка', e: { kz: -1 }, later: { in: 4, t: 'Итоги проверки моста', x: 'Мост действительно аварийный. Смета завышена втрое. Губернатор обижен, мост чинят за миллиард с небольшим.', e: { kz: -3, dv: 3, el: -3, kr: -4 } } },
+        { l: 'Отказать: денег нет', e: { el: -5 }, set: 'bridge_refused' } ] },
+ { id: 'bridge_fall', type: 'event', bg: 'street', who: 'gub', req: 'bridge_refused', minWeek: 8, t: 'Мост рухнул', x: 'Северный мост обрушился ночью. Жертв нет — повезло: по нему как раз никто не ехал. Губернатор уже дал интервью: «Мы предупреждали».',
+   o: [ { l: 'Взять ответственность на себя', e: { dv: 6, el: -6 } },
+        { l: 'Обвинить губернатора', e: { dv: -2, el: 4, sv: -1 } },
+        { l: 'Засекретить детали «в интересах следствия»', e: { sv: -8, bz: 2 }, set: 'journ_ignored' } ] },
+ { id: 'interview', type: 'office', who: 'asya', t: 'Интервью', x: '«У меня вопросы о ваших расходах. Можно честно, можно через пресс-службу. Через пресс-службу будет длиннее и злее».',
+   o: [ { l: 'Дать честное интервью', e: { dv: 6, el: -6, sv: 3 } },
+        { l: 'Отказать', e: { sv: -2 }, set: 'journ_ignored' },
+        { l: 'Эксклюзив в обмен на согласование текста', e: { sv: -6, dv: 2, kr: 3 } } ] },
+ { id: 'investigation', type: 'event', bg: 'print', who: 'asya', req: 'journ_ignored', minWeek: 6, t: 'Расследование', x: 'Вышло расследование «Вечернего Хвоста»: дача, яхта и три тёщи вашего заместителя. Двенадцать миллионов просмотров за сутки.',
+   o: [ { l: 'Признать и уволить заместителя', e: { dv: 5, el: -8, kr: -5 } },
+        { l: 'Подать в суд на издание', e: { sv: -6, dv: -4 } },
+        { l: 'Заблокировать издание', e: { sv: -12, bz: 3, dv: -6 }, later: { in: 4, t: 'Издание за границей', x: '«Вечерний Хвост» переехал за границу. Аудитория выросла вдвое. Спасибо за рекламу.', e: { dv: -4, sv: 2 } } } ] },
+ { id: 'watch', type: 'office', who: 'seifov', t: 'Подарок', x: 'Сейфов ставит на стол коробку: «Скромные швейцарские часы. От коллектива банка. Просто за то, что вы есть».',
+   o: [ { l: 'Принять', e: { el: 8, kr: 15 }, set: 'took_gift' },
+        { l: 'Вернуть с вежливой запиской', e: { el: -6, dv: 1 } },
+        { l: 'Сдать в фонд и рассказать об этом', e: { el: -4, dv: 4 } } ] },
+ { id: 'port', type: 'rounds', who: 'seifov', t: 'Порт', x: 'Сейфов в своём кабинете, двадцать этажей над городом: «Государственный порт убыточен. Продайте его мне. Цену обсудим. Не здесь».',
+   o: [ { l: 'Продать без конкурса', e: { kz: 12, ek: 4, el: 8, kr: 12, dv: -6 } },
+        { l: 'Открытый аукцион', e: { kz: 8, ek: 4, el: -3 }, later: { in: 3, t: 'Итоги аукциона', x: 'Аукцион выиграл банк Сейфова. Единственный участник. Кто бы мог подумать.', e: { el: 3, dv: -2 } } },
+        { l: 'Не продавать', e: { el: -8, ek: -2 } } ] },
+ { id: 'protest', type: 'event', bg: 'yard', who: 'murka', t: 'Митинг', x: 'Тарифы на отопление выросли на треть. Мурка Пушистова собрала у мэрии восемь тысяч недовольных и мегафон.',
+   o: [ { l: 'Выйти к людям', e: { dv: 8, el: -4, bz: -2 } },
+        { l: 'Разогнать — митинг не согласован', e: { bz: 5, sv: -10, dv: -10 } },
+        { l: 'Не замечать', e: {}, later: { in: 3, t: 'Митинги по субботам', x: 'Митинг стал еженедельным. Теперь у него есть свой гимн и мерч.', e: { dv: -6, bz: -4 } } } ] },
+ { id: 'surveil', type: 'office', who: 'ten', t: 'Прослушка', x: '«Нам нужен доступ ко всей переписке граждан. Против террористов, разумеется. Вы же не за террористов?»',
+   o: [ { l: 'Согласиться', e: { bz: 10, sv: -12 } },
+        { l: 'Только по решению суда', e: { bz: 4, sv: -2, el: -3 } },
+        { l: 'Отказать', e: { bz: -6, sv: 4, el: -4 }, later: { in: 5, t: 'Докладная', x: 'Тень написал докладную: вы «препятствуете работе». Копию заботливо прислали вам.', e: { el: -5 } } } ] },
+ { id: 'pension', type: 'meeting', place: 'committee', who: 'minfin', t: 'Пенсии', x: '«Пенсионный фонд пуст. Поднимаем возраст выхода на пенсию на пять лет. Или вы знаете другой способ?»',
+   o: [ { l: 'Поднять сразу', e: { kz: 12, dv: -14, ek: 3 } },
+        { l: 'Поднимать постепенно', e: { kz: 5, dv: -6 } },
+        { l: 'Не трогать', e: { dv: 3 }, later: { in: 6, t: 'Дыра в фонде', x: 'Пенсионный фонд просит срочную дотацию из бюджета.', e: { kz: -9 } } } ] },
+ { id: 'itlaw', type: 'office', who: 'it', t: 'Льготы для IT', x: '«Дайте айтишникам налоговые льготы — и мы не уедем. Ну, почти все не уедем».',
+   o: [ { l: 'Дать льготы', e: { kz: -4, ek: 6 }, later: { in: 6, t: 'IT-сектор растёт', x: 'Три стартапа привлекли инвестиции. Один даже не из Кипра.', e: { ek: 4, kz: 2 } } },
+        { l: 'Льготы в обмен на доступ к данным пользователей', e: { ek: 3, sv: -8, bz: 4, el: 2 } },
+        { l: 'Отказать', e: { ek: -4 } } ] },
+ { id: 'meds', type: 'office', who: 'doc', t: 'Лекарства', x: '«В больницах нет инсулина и обезболивающих. Неделя — и начнутся смерти. Я не преувеличиваю, я врач».',
+   o: [ { l: 'Срочная закупка за рубежом', e: { kz: -8, dv: 6 } },
+        { l: 'Отечественный аналог', e: { ek: 3, dv: -2 }, later: { in: 4, t: 'Аналог', x: 'Отечественный аналог сертифицирован. Помогает примерно как сертификат.', e: { dv: -6 } } },
+        { l: 'Объявить, что дефицита нет', e: { sv: -3 }, later: { in: 2, t: 'Очереди в аптеках', x: 'Очереди в аптеках показали все каналы, кроме государственных.', e: { dv: -9 } } } ] },
+ { id: 'army', type: 'office', who: 'gen', t: 'Оборона', x: '«Обстановка сложная. Нужно плюс тридцать процентов к оборонному бюджету. Какая обстановка — секрет».',
+   o: [ { l: 'Дать всё', e: { kz: -10, bz: 8, el: 6 } },
+        { l: 'Дать половину', e: { kz: -5, bz: 3 } },
+        { l: 'Отказать', e: { bz: -4, el: -6 } } ] },
+ { id: 'strike', type: 'rounds', who: 'union', t: 'Забастовка', x: 'Профсоюз шахтёров, прокуренный кабинет: «Зарплату задерживают третий месяц. Завтра встаём».',
+   o: [ { l: 'Погасить долги из бюджета', e: { kz: -8, dv: 6, ek: 2 } },
+        { l: 'Надавить на владельцев шахт', e: { el: -5, dv: 4, ek: 2 } },
+        { l: 'Объявить забастовку незаконной', e: { sv: -6, bz: 3, dv: -6, ek: -4 } } ] },
+ { id: 'blogger', type: 'office', who: 'blog', t: 'Коллаборация', x: '«Давайте снимем рилс: вы и котики из приюта. Пять миллионов просмотров гарантирую. Если нет — вы сами виноваты».',
+   o: [ { l: 'Снять ролик', e: { dv: 5, el: -1 } },
+        { l: 'Оплатить продвижение из бюджета', e: { kz: -3, dv: 6, kr: 4 }, later: { in: 4, t: 'Утечка', x: 'Выяснилось, что «искренний» ролик оплачен из бюджета. Теперь в нём три миллиона дизлайков.', e: { dv: -9 } } },
+        { l: 'Вежливо отказаться', e: {} } ] },
+ { id: 'loan', type: 'office', who: 'amb', t: 'Кредит', x: 'Посол Соседней Республики: «Дадим кредит. Большой. Залог — ваше северное месторождение. Пустяк».',
+   o: [ { l: 'Взять под залог', e: { kz: 16, ek: 4 }, later: { in: 10, t: 'Платежи по кредиту', x: 'Пришёл первый платёж по кредиту. Посол улыбается шире.', e: { kz: -12, el: -4 } } },
+        { l: 'Взять меньше, без залога', e: { kz: 7, ek: 2 } },
+        { l: 'Отказать', e: { el: 2 } } ] },
+ { id: 'granny', type: 'office', who: 'baba', t: 'Письмо', x: '«Сынок, я писала тебе три письма. Соседи по ночам гоняют валерьянку и поют. Полиция не приезжает. Кому мне ещё писать?»',
+   o: [ { l: 'Позвонить начальнику полиции', e: { dv: 3, bz: 2 } },
+        { l: 'Сфотографироваться с ней для отчёта', e: { dv: 4, kr: 1 } },
+        { l: 'Перенаправить письмо в профильное ведомство', e: { dv: -1 } } ] },
+ { id: 'cams', type: 'meeting', place: 'committee', who: 'mayor', t: 'Камеры', x: 'Мэр Котлеткин: «Поставим в городе камеры с распознаванием лиц. Преступность упадёт. Ну и вообще всё видно будет».',
+   o: [ { l: 'Внедрить везде', e: { bz: 10, sv: -10, kz: -6, ek: 2 } },
+        { l: 'С ограничениями и независимым аудитом', e: { bz: 5, sv: -3, kz: -5 } },
+        { l: 'Отказать', e: { bz: -3, sv: 3 } } ] },
+ { id: 'leak', type: 'rounds', who: 'it', t: 'Утечка баз', x: '«Ваши базы граждан продают в даркнете. Адреса, телефоны, диагнозы. Двадцать рублей за запись. Со скидкой — пятнадцать».',
+   o: [ { l: 'Признать публично и найти виновных', e: { dv: -4, sv: 2, bz: 3 } },
+        { l: 'Замять', e: { dv: 1, kr: 5 }, later: { in: 6, t: 'Утечку нашли', x: 'Журналисты купили в даркнете ваши собственные данные. И опубликовали чек.', e: { dv: -10 } } },
+        { l: 'Обвинить хакеров соседней страны', e: { dv: 2, el: 2, sv: -2 } } ] },
+ { id: 'stats', type: 'rounds', who: 'stat', t: 'Инфляция', x: 'Глава статистики шепчет: «Реальная инфляция — четырнадцать процентов. Могу показать семь. Методика гибкая».',
+   o: [ { l: 'Показать семь', e: { dv: 6 }, later: { in: 7, t: 'Цены не обманешь', x: 'Граждане сравнили цифры статистики с чеками в магазине.', e: { dv: -11, ek: -3 } } },
+        { l: 'Публиковать как есть', e: { dv: -4, ek: 1 } },
+        { l: 'Сменить методику «по международным стандартам»', e: { dv: 2, sv: -2, kr: 2 } } ] },
+ { id: 'theatre', type: 'office', who: 'director', t: 'Премьера', x: '«Мой новый спектакль — про власть. Без намёков, прямо в лоб. Его хотят запретить. Вы же не запретите?»',
+   o: [ { l: 'Запретить', e: { sv: -8, el: 3 } },
+        { l: 'Не вмешиваться', e: { sv: 4, el: -2 } },
+        { l: 'Прийти на премьеру и аплодировать', e: { dv: 4, sv: 3, el: -4 } } ] },
+ { id: 'fireworks', type: 'meeting', place: 'committee', who: 'mayor', t: 'Праздник', x: '«На День города предлагаю салют за два миллиарда. Народ любит салют. Народ любит громко».',
+   o: [ { l: 'Устроить салют', e: { kz: -6, dv: 5 } },
+        { l: 'Скромный праздник', e: { kz: -1, dv: 1 } },
+        { l: 'Отменить, деньги отдать больницам', e: { dv: 4, el: -4 } } ] },
+ { id: 'snow', type: 'rounds', who: 'mayor', t: 'Снегопад', x: 'Город стоит. Мэр в своём кабинете пьёт чай: «Зима, как обычно, наступила неожиданно».',
+   o: [ { l: 'Выделить технику из резерва', e: { kz: -4, dv: 4 } },
+        { l: 'Публично отчитать мэра', e: { dv: 3, el: -5 } },
+        { l: 'Повторить его фразу на пресс-конференции', e: { dv: -7 } } ] },
+ { id: 'valerian', type: 'office', who: 'lobby', t: 'Акциз', x: '«Снизьте акциз на валерьянку. Народ всё равно пьёт, пусть пьёт легальное. А мы, со своей стороны, будем благодарны».',
+   o: [ { l: 'Снизить акциз', e: { kz: -6, ek: 4, el: 5, kr: 6 } },
+        { l: 'Повысить акциз', e: { kz: 8, dv: -4, ek: -2 } },
+        { l: 'Оставить как есть', e: { el: -1 } } ] },
+ { id: 'nepotism', type: 'office', who: 'colleague', t: 'Сын коллеги', x: '«Мой оболтус окончил институт. Пристрой его в госкорпорацию, а? Он не помешает. Он вообще ничего не делает».',
+   o: [ { l: 'Пристроить', e: { el: 6, kr: 8 } },
+        { l: 'Пусть проходит конкурс', e: { el: -2, dv: 1 } },
+        { l: 'Отказать', e: { el: -5 } } ] },
+ { id: 'crypto', type: 'office', who: 'it', t: 'Мурлыкоин', x: '«Выпустим государственную криптовалюту. Мурлыкоин! Курс будет только расти. Мы так посчитали».',
+   o: [ { l: 'Выпустить', e: { ek: 5, kz: 6 }, later: { in: 7, t: 'Курс Мурлыкоина', x: 'Курс мурлыкоина упал на 92%. Граждане, купившие его на пенсионные накопления, хотят поговорить.', e: { ek: -9, dv: -8 } } },
+        { l: 'Запретить криптовалюты', e: { ek: -3, sv: -3 } },
+        { l: 'Изучить вопрос', e: {} } ] },
+ { id: 'refugees', type: 'meeting', place: 'council', who: 'pm', t: 'Беженцы', x: 'После наводнения у соседей к границе пришли двадцать тысяч человек. Нужно решение до вечера.',
+   o: [ { l: 'Принять и разместить', e: { kz: -5, sv: 4, dv: -3, ek: 2 } },
+        { l: 'Временный лагерь у границы', e: { kz: -3, bz: 2 } },
+        { l: 'Закрыть границу', e: { bz: 4, sv: -4, dv: 2 } } ] },
+ { id: 'bloggerlaw', type: 'meeting', place: 'hall', who: 'speaker', t: 'Закон о блогерах', x: 'Законопроект: блогеры с аудиторией больше трёх тысяч обязаны регистрироваться и отчитываться о каждом посте.',
+   o: [ { l: 'Поддержать', e: { sv: -8, bz: 4, el: 4 } },
+        { l: 'Выступить против', e: { sv: 4, el: -5 } },
+        { l: 'Поправка: порог — миллион подписчиков', e: { sv: -2, el: 1 } } ] },
+ { id: 'call', type: 'office', who: 'anon', t: 'Звонок в три ночи', x: '«Не кладите трубку. В вашем окружении готовят вашу отставку. Кто — скажу при встрече». Гудки.',
+   o: [ { l: 'Проверить окружение', e: { el: -4, bz: 3 } },
+        { l: 'Сообщить в службу безопасности', e: { sv: -2, bz: 2, el: 2 } },
+        { l: 'Лечь спать', e: {} } ] },
+ { id: 'turnout', type: 'rounds', who: 'cik', t: 'Явка', x: '«Скоро выборы мэров. Явка нужна хорошая. Бюджетников можно… мотивировать. Или выборы вообще отменить — ради экономии».',
+   o: [ { l: 'Мотивировать бюджетников', e: { dv: 2, sv: -6, kr: 4 } },
+        { l: 'Пусть всё идёт честно', e: { el: -2, sv: 2 } },
+        { l: 'Отменить выборы мэров', e: { kz: 3, sv: -10, el: 6, dv: -6 } } ] },
+ { id: 'vacation', type: 'office', who: 'pr', t: 'Отпуск', x: '«Вам нужен отпуск. Варианты: Сейшелы на служебном самолёте или дача с картошкой. Картошка, кстати, хорошо смотрится в кадре».',
+   o: [ { l: 'Сейшелы, служебный самолёт', e: { dv: -6, kr: 5, el: 2 } },
+        { l: 'Дача и картошка', e: { dv: 3 } },
+        { l: 'Без отпуска', e: { dv: 1, el: -1 } } ] },
+ { id: 'food', type: 'meeting', place: 'committee', who: 'minfin', t: 'Цены на корм', x: 'Корм подорожал на сорок процентов. Граждане считают каждую банку. Правительство собирается.',
+   o: [ { l: 'Заморозить цены', e: { dv: 6, ek: -5 }, later: { in: 4, t: 'Пустые полки', x: 'Корм исчез с полок. Зато по замороженной цене.', e: { dv: -9, ek: -3 } } },
+        { l: 'Адресные субсидии', e: { kz: -6, dv: 3 } },
+        { l: 'Ничего не делать: рынок сам', e: { dv: -5, ek: 2 } } ] },
+ { id: 'dvdeal', type: 'rounds', who: 'dvor', t: 'Сделка с оппозицией', x: 'Дворовый в своём крошечном кабинете: «Мы поддержим ваш законопроект. Взамен — эфир на государственном ТВ. Хотя бы раз в месяц».',
+   o: [ { l: 'Согласиться', e: { sv: 4, el: -4, dv: 2 } },
+        { l: 'Отказать', e: {} },
+        { l: 'Передать запись разговора службе безопасности', e: { sv: -6, bz: 2, el: 3, dv: -2 } } ] },
+
+ /* ===== министр ===== */
+ { id: 'm_report', roles: ['min'], type: 'office', who: 'zam', t: 'Отчёт', x: '«План по благоустройству выполнен на шестьдесят один процент. Что пишем в отчёт?»',
+   o: [ { l: '«Выполнен на 100%»', e: { dv: 6, el: 2, kr: 4 }, later: { in: 6, t: 'Счётная палата', x: 'Счётная палата нашла расхождения: из ста благоустроенных дворов существуют сорок.', e: { dv: -10, el: -5 } } },
+        { l: 'Честно: 61%', e: { dv: -3, el: -4 } },
+        { l: '«Выполнен с учётом пересмотра плана»', e: { dv: 2, el: 2, kr: 2 } } ] },
+ { id: 'm_cut', roles: ['min'], type: 'meeting', place: 'committee', who: 'minfin', t: 'Сокращение', x: 'Заседание правительства. Министр финансов: «Ваше ведомство режем на двадцать процентов. Всё равно у вас ничего не работает».',
+   o: [ { l: 'Согласиться', e: { kz: 8, el: -2, ek: -3 } },
+        { l: 'Биться за каждый рубль', e: { el: -6, kz: -2, ek: 2 } },
+        { l: 'Урезать зарплаты чиновникам', e: { kz: 5, el: -8, dv: 6 } } ] },
+ { id: 'm_tender', roles: ['min'], type: 'office', who: 'zam', t: 'Тендер', x: 'Заместитель закрывает дверь: «Тендер на плитку. Можно сделать красиво. Пятьдесят на пятьдесят. Никто не узнает».',
+   o: [ { l: 'Согласиться', e: { kr: 15, el: 4 } },
+        { l: 'Уволить заместителя', e: { el: -4, dv: 2 } },
+        { l: 'Сдать его в службу безопасности', e: { el: -6, bz: 2, dv: 3, kr: -3 } } ] },
+ { id: 'm_boss', roles: ['min'], type: 'office', who: 'presx', t: 'Звонок сверху', x: 'Президент по прямой линии: «Мне докладывают, что у вас бардак. Это так?»',
+   o: [ { l: 'Признать ошибки', e: { el: -3, dv: 2 } },
+        { l: 'Свалить на соседнее министерство', e: { el: 3, dv: -1 } },
+        { l: 'Пообещать результат через месяц', e: { el: 6 }, later: { in: 5, t: 'Обещание', x: 'Месяц прошёл. Президент помнит, что вы обещали. Вы — смутно.', e: { el: -11 } } } ] },
+ { id: 'm_decree', roles: ['min'], type: 'meeting', place: 'committee', who: 'ten', t: 'Постановление', x: 'На подпись — постановление к новому закону: удалять «тревожные» посты в течение 24 часов, обжалование — после.',
+   o: [ { l: 'Подписать как есть', e: { bz: 6, sv: -8, el: 4 } },
+        { l: 'Вписать обжалование до исполнения', e: { sv: 3, bz: 2, el: -3 } },
+        { l: 'Вернуть на доработку', e: { sv: 2, el: -5 } } ] },
+ { id: 'm_hour', roles: ['min'], type: 'rounds', who: 'dvor', t: 'Правительственный час', x: 'Вас вызвали в парламент. Оппозиция приготовила сорок неудобных вопросов и один очень неудобный.',
+   o: [ { l: 'Прийти и ответить на всё', e: { dv: 5, el: -2 } },
+        { l: 'Прислать заместителя', e: { el: 1, dv: -3 } },
+        { l: 'Сорвать: «срочная командировка»', e: { dv: -5, sv: -1 } } ] },
+ { id: 'm_gift_kogtev', roles: ['min'], type: 'rounds', who: 'kogtev', t: 'Перестановки', x: 'Ходят слухи о перестановках в правительстве. Когтев принимает «по личным вопросам». У него день рождения. Совпадение.',
+   o: [ { l: 'Подарить что-нибудь существенное', e: { el: 10, kr: 8 } },
+        { l: 'Поздравить открыткой', e: { el: -2 } },
+        { l: 'Не идти, работать лучше', e: { dv: 2, ek: 2, el: -4 } } ] },
+
+ /* ===== депутат ===== */
+ { id: 'd_students', roles: ['dep'], type: 'meeting', place: 'hall', who: 'speaker', t: 'Ваш законопроект', x: 'Ваш законопроект о бесплатном транспорте для студентов. Для принятия нужно 226 голосов. Вам обещали 201.',
+   vote: { base: 201, need: 226, pass: { t: 'Закон принят', x: 'Студенты ездят бесплатно. Транспортники считают убытки.', e: { dv: 6, kz: -4 } }, fail: { t: 'Не хватило голосов', x: 'Законопроект провален. Студенты запомнили фамилии.', e: { dv: -3 } } },
+   o: [ { l: 'Договориться с «Дворовым фронтом»', votes: 30, e: { el: -4, sv: 2 } },
+        { l: 'Пообещать губернаторам поддержку их поправок', votes: 27, e: { el: 2 }, later: { in: 5, t: 'Долг платежом', x: 'Губернаторы пришли за обещанной поддержкой. Их поправки — про налоговые льготы для своих.', e: { kz: -5, kr: 4 } } },
+        { l: 'Ни с кем не договариваться', votes: 0, e: {} } ] },
+ { id: 'd_whip', roles: ['dep'], type: 'meeting', place: 'boardroom', who: 'kogtev', t: 'Фракционная дисциплина', x: 'Собрание фракции: «Голосуем за закон о регистрации блогеров. Все. Возражения пишите на бумажке и ешьте».',
+   o: [ { l: 'Голосовать «за»', e: { el: 6, sv: -6 } },
+        { l: 'Голосовать «против»', e: { el: -9, sv: 3, dv: 3 }, later: { in: 4, t: 'Комитет', x: 'Вас вывели из состава комитета. Формально — «для ротации».', e: { el: -4 } } },
+        { l: '«Заболеть» в день голосования', e: { el: -3 } } ] },
+ { id: 'd_dump', roles: ['dep'], type: 'office', who: 'baba', t: 'Свалка', x: '«Возле нашего посёлка растёт свалка. Дети кашляют. Вы же депутат — сделайте запрос куда-нибудь».',
+   o: [ { l: 'Депутатский запрос в прокуратуру', e: { dv: 4, el: -2 }, later: { in: 5, t: 'Свалка', x: 'По вашему запросу свалку закрыли. Владелец — родственник губернатора — недоволен.', e: { dv: 4, el: -3, ek: -1 } } },
+        { l: 'Приехать на свалку с камерой', e: { dv: 6, el: -3 } },
+        { l: 'Пообещать разобраться', e: { dv: -2 } } ] },
+ { id: 'd_amend', roles: ['dep'], type: 'rounds', who: 'lobby', t: 'Поправка', x: '«Внесите поправку в налоговый кодекс: маленькую, на одну строчку. Наша благодарность будет больше».',
+   o: [ { l: 'Внести за благодарность', e: { kr: 12, el: 5, kz: -4 } },
+        { l: 'Внести открыто, с расчётами отрасли', e: { ek: 3, el: -1 } },
+        { l: 'Отказать', e: { el: -3 } } ] },
+ { id: 'd_debate', roles: ['dep'], type: 'rounds', who: 'dvor', t: 'Дебаты', x: 'Телевизионные дебаты с Тихоном Дворовым. Прямой эфир. Почти прямой.',
+   o: [ { l: 'Атаковать его лично', e: { dv: 2, sv: -2, el: 2 } },
+        { l: 'Согласиться с ним в главном', e: { dv: 5, el: -5 } },
+        { l: 'Не пойти', e: { dv: -3 } } ] },
+ { id: 'd_immunity', roles: ['dep'], type: 'meeting', place: 'hall', who: 'speaker', t: 'Неприкосновенность', x: 'Голосование: снять депутатскую неприкосновенность с Тихона Дворового. Он слишком много говорит.',
+   o: [ { l: 'За', e: { el: 6, sv: -8 } },
+        { l: 'Против', e: { el: -8, sv: 6, dv: 2 } },
+        { l: 'Воздержаться', e: { el: -2 } } ] },
+ { id: 'd_trip', roles: ['dep'], type: 'office', who: 'colleague', t: 'Командировка', x: '«Делегация едет изучать опыт тёплых стран. Две недели, пятизвёздочный опыт. Тебя записывать?»',
+   o: [ { l: 'Поехать', e: { kr: 5, dv: -4, el: 2 } },
+        { l: 'Отказаться', e: { dv: 1, el: -1 } },
+        { l: 'Поехать за свой счёт и выложить отчёт', e: { dv: 3 } } ] },
+
+ /* ===== президент ===== */
+ { id: 'p_sign', roles: ['pres'], type: 'office', who: 'speaker', t: 'Закон на подписи', x: 'Парламент принял закон о регистрации блогеров. У вас четырнадцать дней.',
+   o: [ { l: 'Подписать', e: { sv: -8, bz: 4, el: 6 } },
+        { l: 'Наложить вето', e: { sv: 4, el: -8 }, veto: true },
+        { l: 'Запросить Конституционный суд', e: { sv: 2, el: -3 }, later: { in: 5, t: 'Решение суда', x: 'Суд признал закон частично неконституционным. Регистрация — только для СМИ.', e: { sv: 3, dv: 2 } } } ] },
+ { id: 'p_pm', roles: ['pres'], type: 'meeting', place: 'council', who: 'kogtev', t: 'Премьер', x: 'Нужно назначить председателя правительства. Кандидатов трое. Когтев намекает, какой из них «правильный».',
+   o: [ { l: 'Технократ-экономист', e: { ek: 6, el: -6 } },
+        { l: 'Старый друг, «правильный»', e: { el: 8, ek: -4, kr: 4 } },
+        { l: 'Человек из оппозиции', e: { dv: 8, sv: 4, el: -10 } } ] },
+ { id: 'p_rating', roles: ['pres'], type: 'office', who: 'adviser', t: 'Доклад', x: '«Народ счастлив. Рейтинг — восемьдесят шесть процентов. Протестов нет, а те, что есть, — проплачены».',
+   o: [ { l: 'Поверить', e: {}, later: { in: 4, t: 'Реальный опрос', x: 'Независимый опрос: рейтинг — сорок один процент. Советник объясняет, что это проплаченный опрос.', e: { dv: -8 } } },
+        { l: 'Заказать независимый опрос', e: { kz: -2, dv: 2, el: -2 } },
+        { l: 'Уволить советника', e: { el: -4, dv: 1 } } ] },
+ { id: 'p_terms', roles: ['pres'], type: 'meeting', place: 'boardroom', who: 'kogtev', t: 'Сроки', x: '«Поправка в конституцию: ваши прежние сроки не считаются. Начинаем с чистого листа. Народ поддержит. Мы проверили».',
+   o: [ { l: 'Принять поправку', e: { el: 10, sv: -12, dv: -6 } },
+        { l: 'Отказаться', e: { el: -8, sv: 6, dv: 4 } },
+        { l: 'Вынести на честный референдум', e: { sv: 2, dv: -2, kz: -3 } } ] },
+ { id: 'p_pardon', roles: ['pres'], type: 'office', who: 'asya', t: 'Помилование', x: 'Прошение о помиловании журналиста, осуждённого за «распространение беспокойства». Приложено двадцать тысяч подписей.',
+   o: [ { l: 'Помиловать', e: { sv: 6, el: -4, dv: 3 } },
+        { l: 'Отказать', e: { sv: -4, el: 2 } },
+        { l: 'Помиловать в обмен на покаянное интервью', e: { sv: -2, dv: 1 } } ] },
+ { id: 'p_plot', roles: ['pres'], type: 'meeting', place: 'boardroom', who: 'ten', t: 'Заговор', x: 'Совбез. Тень докладывает: в армии готовят заговор. Доказательств нет, но «есть ощущение».',
+   o: [ { l: 'Арестовать подозреваемых генералов', e: { bz: 4, el: -12, sv: -6 } },
+        { l: 'Потребовать доказательства', e: { el: 2, bz: -2 } },
+        { l: 'Тихо сменить командование', e: { el: -4, bz: 2 } } ] },
+ { id: 'p_summit', roles: ['pres'], type: 'rounds', who: 'amb', t: 'Саммит', x: 'Международный саммит. Соглашение о климате. Подписывать или нет — все смотрят на вас. В основном камеры.',
+   o: [ { l: 'Подписать и выполнять', e: { ek: -4, dv: 2, sv: 2, kz: 4 } },
+        { l: 'Подписать и не выполнять', e: { dv: 1 }, later: { in: 8, t: 'Санкции', x: 'За невыполнение соглашения введены торговые ограничения.', e: { ek: -7 } } },
+        { l: 'Не подписывать', e: { ek: 3, el: 3 } } ] },
+
+ /* ===== обязательные: бюджет (неделя 10) ===== */
+ { id: 'budget_min', roles: ['min'], forced: 'budget', type: 'meeting', place: 'committee', who: 'minfin', t: 'Бюджет', x: 'Заседание правительства по бюджету. Ваше министерство просит пятьдесят миллиардов. Минфин даёт двадцать.',
+   o: [ { l: 'Согласиться на двадцать', e: { kz: 6, ek: -3, el: 2 } },
+        { l: 'Пойти к президенту через голову министра', e: { kz: -6, ek: 4, el: -6 } },
+        { l: 'Взять двадцать и тихо перераспределить', e: { ek: 2, kr: 6 } } ] },
+ { id: 'budget_dep', roles: ['dep'], forced: 'budget', type: 'meeting', place: 'hall', who: 'speaker', t: 'Бюджет', x: 'Голосование по бюджету. Расходы на оборону растут, на образование — падают. Нужно 226 голосов.',
+   vote: { base: 214, need: 226, pass: { t: 'Бюджет принят', x: 'Бюджет принят. Учителя узнали о себе много нового.', e: { kz: 4, el: 4, dv: -4 } }, fail: { t: 'Бюджет провален', x: 'Бюджет отправлен на доработку. Правительство в бешенстве, учителя — в надежде.', e: { el: -8, dv: 4, ek: -3 } } },
+   o: [ { l: 'За', votes: 1, e: { el: 4 } },
+        { l: 'Против и уговорить коллег', votes: -20, e: { el: -6, dv: 3 } },
+        { l: 'Против, но без шума', votes: -1, e: { el: -2 } } ] },
+ { id: 'budget_pres', roles: ['pres'], forced: 'budget', type: 'office', who: 'pm', t: 'Бюджет', x: 'Бюджет на подпись. Дефицит большой. Премьер предлагает поднять НДС на два процента.',
+   o: [ { l: 'Подписать с повышением НДС', e: { kz: 12, dv: -8, ek: -4 } },
+        { l: 'Вернуть: сократить расходы на чиновников', e: { kz: 6, el: -8, dv: 4 } },
+        { l: 'Подписать, дефицит закрыть займами', e: { kz: 4 }, later: { in: 10, t: 'Проценты', x: 'Пришло время платить по займам.', e: { kz: -10 } } } ] },
+
+ /* ===== обязательные: кризис (неделя 22) ===== */
+ { id: 'crisis_virus', forced: 'crisis', type: 'event', bg: 'yard', who: 'doc', t: 'Эпидемия', x: 'Новый вирус. Больницы заполнены на восемьдесят процентов и быстро растут. Врачи просят решения сегодня.',
+   o: [ { l: 'Ввести карантин', e: { bz: 6, ek: -10, dv: 2, sv: -4 } },
+        { l: 'Только рекомендации', e: { ek: -2, dv: -3 }, later: { in: 3, t: 'Вторая волна', x: 'Вторая волна оказалась сильнее первой.', e: { dv: -6, bz: -5 } } },
+        { l: 'Скрыть масштаб', e: { sv: -6, dv: 2 }, later: { in: 3, t: 'Больницы переполнены', x: 'Правда вышла наружу через переполненные больницы.', e: { dv: -14, bz: -6 } } } ] },
+ { id: 'crisis_flood', forced: 'crisis', type: 'event', bg: 'yard_ev', who: 'gub', t: 'Наводнение', x: 'Река вышла из берегов. Затоплены три района. Губернатор звонит каждые десять минут.',
+   o: [ { l: 'Эвакуация и армия', e: { kz: -8, dv: 6, bz: 2 } },
+        { l: 'Деньги губернатору, пусть сам', e: { kz: -10, dv: 2, kr: 6 } },
+        { l: '«Стихийное бедствие, никто не виноват»', e: { dv: -9 } } ] },
+ { id: 'crisis_leak', forced: 'crisis', type: 'event', bg: 'print', who: 'it', t: 'Утечка века', x: 'Опубликованы персональные данные сорока миллионов граждан. Включая ваши. И ваш адрес. И вашу медкарту.',
+   o: [ { l: 'Признать, наказать виновных, сменить систему', e: { dv: -4, bz: 4, sv: 2, kz: -4 } },
+        { l: 'Заблокировать мессенджеры, где публикуют', e: { sv: -14, bz: 6, ek: -4 } },
+        { l: 'Обвинить иностранных хакеров', e: { dv: 2, el: 2, sv: -4 }, later: { in: 4, t: 'Хакеры нашлись', x: 'Журналисты выяснили: базы слил сотрудник вашего же подрядчика.', e: { dv: -8 } } } ] }
+];
+
+/* ================= КОНЦОВКИ ================= */
+const ENDINGS = {
+  default: { t: 'Дефолт', x: 'Казна пуста. Зарплаты бюджетникам выдают валерьянкой. Международные кредиторы вежливо интересуются, где вы будете жить.', note: 'Пустая казна — самый частый путь к уходу власти без всяких протестов: просто нечем платить.' },
+  hoard: { t: 'Кубышка', x: 'Казна полна до краёв. Страна — пуста: больницы, школы и дороги ждут «лучших времён». Шахтёры перекрыли трассу.', note: 'Деньги, которые не тратятся на людей, тоже становятся политической проблемой.' },
+  street: { t: 'Улица', x: 'Доверия не осталось. На площади сто тысяч человек. Вас просят уйти. Вы уходите — через запасной выход.', note: 'Когда доверие падает до нуля, власть держится только на силе. Или не держится.' },
+  cult: { t: 'Культ', x: 'Вас любят все. Совсем все. Ваш портрет висит в каждом подъезде, а сомневающихся больше нет — потому что сомнение стало неприлично.', note: 'Стопроцентное одобрение обычно означает не любовь, а отсутствие возможности не одобрять.' },
+  silence: { t: 'Тихий час', x: 'Свободы не осталось. Тихо. Вас больше никто не критикует — и никто больше ничего вам не сообщает. Даже правду.', note: 'Эту концовку изнутри показывает игра «Тихий час».' },
+  anarchy: { t: 'Безвластие', x: 'Всё можно всем. Законы никто не исполняет, налоги никто не платит, а полиция тоже вышла на митинг — за свои права.', note: 'Свобода без работающих институтов быстро превращается в право сильного.' },
+  emergency: { t: 'Чрезвычайное положение', x: 'Безопасность рухнула. Банды делят районы, вас эвакуируют на вертолёте. Вертолёт, кстати, тоже угнали.', note: 'Государство, которое не может защитить граждан, перестаёт быть для них государством.' },
+  barracks: { t: 'Казарма', x: 'Безопасность абсолютна. Проверка документов на каждом углу, комендантский час с восьми вечера. Преступности нет. Жизни тоже.', note: 'Полная безопасность и полная свобода несовместимы — каждый шаг к одной отнимает у другой.' },
+  crash: { t: 'Крах', x: 'Экономика остановилась. Магазины закрыты, курс местной валюты публикуют каждые пятнадцать минут. Вы — в учебниках экономики. В главе «Как не надо».', note: 'Экономический кризис бьёт по всем шкалам сразу, просто с задержкой.' },
+  bubble: { t: 'Пузырь', x: 'Экономика растёт так быстро, что лопается. Недвижимость, мурлыкоины, стартапы — всё обесценилось за одну неделю.', note: 'Слишком быстрый рост без обеспечения — классический сценарий финансового пузыря.' },
+  plot: { t: 'Заговор', x: 'Элиты решили, что вы им больше не нужны. Утром вы узнали из новостей, что «ушли по собственному желанию».', note: 'Даже очень популярного политика может убрать его собственное окружение.' },
+  hostage: { t: 'Заложник', x: 'Элиты довольны. Настолько, что решения теперь принимают они, а вы — подписываете. Вам дали красивый кабинет. Без ручки на двери изнутри.', note: 'Чем больше власть зависит от узкого круга, тем меньше она принадлежит тому, кто сидит в кресле.' },
+  arrest: { t: 'Арест', x: 'Коррупция достигла предела. Часы, тендеры, командировки — всё всплыло разом. Утром за вами пришли. Коллеги, которые делили с вами всё, дают показания первыми.', note: 'Скрытая шкала коррупции росла с каждым «подарком». Вы её не видели. Но она вас видела.' },
+  term_good: { t: 'Срок с честью', x: 'Сорок недель позади. Страна не рухнула, не взлетела, не замёрзла и не взорвалась. Вас даже не ругают — почти. Для политики это триумф.', note: 'Баланс скучен, но именно он позволяет пережить срок.' },
+  term_ok: { t: 'Тихая отставка', x: 'Сорок недель позади. Вы дотянули, но одни шкалы перекошены, другие — на грани. Вам вручают грамоту и тихо провожают на пенсию.', note: 'Пережить срок и оставить стране здоровую систему — разные задачи.' }
+};
+
+</script>
+<script>
+/* ================= TELEGRAM ================= */
+const TG = (window.Telegram && window.Telegram.WebApp) || null;
+const inTG = !!(TG && TG.platform && TG.platform !== 'unknown');
+const tgv = (v) => { try { return !!(inTG && TG.isVersionAtLeast(v)); } catch (e) { return false; } };
+const hap = {
+  sel() { try { if (tgv('6.1')) TG.HapticFeedback.selectionChanged(); } catch (e) {} },
+  hit(s) { try { if (tgv('6.1')) TG.HapticFeedback.impactOccurred(s || 'light'); } catch (e) {} },
+  note(t) { try { if (tgv('6.1')) TG.HapticFeedback.notificationOccurred(t); } catch (e) {} }
+};
+const $ = (id) => document.getElementById(id);
+function tgBack(show) { try { if (tgv('6.1')) show ? TG.BackButton.show() : TG.BackButton.hide(); } catch (e) {} }
+if (inTG) { try {
+  TG.ready(); TG.expand();
+  if (tgv('7.7')) TG.disableVerticalSwipes();
+  if (tgv('6.1')) { TG.setHeaderColor('#0f1018'); TG.setBackgroundColor('#0f1018'); TG.BackButton.onClick(() => { if (!$('modal').hidden) closeModal(); }); }
+  if (tgv('7.10')) TG.setBottomBarColor('#0a0b11');
+  TG.onEvent('viewportChanged', () => fit());
+  if (tgv('8.0')) ['fullscreenChanged', 'safeAreaChanged', 'contentSafeAreaChanged'].forEach(ev => TG.onEvent(ev, () => fit()));
+} catch (e) {} }
+
+/* ================= СОСТОЯНИЕ ================= */
+const VIS = STATS.map(s => s.k);
+const S = { role: null, week: 1, st: {}, used: [], flags: [], queue: [], log: [], snap: {}, card: null, mode: 'start', sel: -1, sound: false, rm: false, ended: null, crisis: null, seen: [] };
+try { const p = JSON.parse(localStorage.getItem('kab-prefs') || '{}'); S.sound = !!p.sound; S.rm = p.rm ?? matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+const savePrefs = () => { try { localStorage.setItem('kab-prefs', JSON.stringify({ sound: S.sound, rm: S.rm })); } catch (e) {} };
+const SAVE_KEY = 'kabinet_save_v1';
+let saveT = 0;
+function saveGame() {
+  if (!S.role || S.ended) return clearSave();
+  const st = { v: 1, role: S.role, week: S.week, st: S.st, used: S.used, flags: S.flags, queue: S.queue, log: S.log.slice(-60), snap: S.snap, crisis: S.crisis, card: S.card ? S.card.id || S.card._kind : null, cardData: S.card && S.card._kind ? S.card : null };
+  let s = JSON.stringify(st); if (s.length > 4000) { st.log = st.log.slice(-15); s = JSON.stringify(st); }
+  try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
+  clearTimeout(saveT); saveT = setTimeout(() => { try { if (tgv('6.9')) TG.CloudStorage.setItem(SAVE_KEY, s); } catch (e) {} }, 1200);
+}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} try { if (tgv('6.9')) TG.CloudStorage.removeItem(SAVE_KEY); } catch (e) {} }
+function loadSave(cb) {
+  let local = null; try { local = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) {}
+  if (!tgv('6.9')) return cb(local);
+  let done = false; const fin = (v) => { if (!done) { done = true; cb(v); } };
+  try { TG.CloudStorage.getItem(SAVE_KEY, (err, v) => { let c = null; try { c = v ? JSON.parse(v) : null; } catch (e) {} fin(c || local); }); } catch (e) { fin(local); }
+  setTimeout(() => fin(local), 1500);
+}
+
+/* ================= ЗВУК ================= */
+const AU = { ctx: null,
+  init() { if (this.ctx) return; const C = window.AudioContext || window.webkitAudioContext; if (C) { this.ctx = new C(); } },
+  tone(f, d, type = 'square', v = .05, slide = 0, delay = 0) { if (!S.sound) return; this.init(); if (!this.ctx) return; const t = this.ctx.currentTime + delay; const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.linearRampToValueAtTime(Math.max(20, f + slide), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + d + .02); },
+  sfx(n) { const T = this; ({ sel: () => T.tone(700, .04, 'square', .03), ok: () => { T.tone(520, .06, 'triangle', .06); T.tone(780, .08, 'triangle', .05, 0, .06); }, up: () => T.tone(660, .12, 'triangle', .05, 220), down: () => T.tone(330, .16, 'sawtooth', .04, -140), vote: () => [523, 659, 784].forEach((f, i) => T.tone(f, .12, 'square', .04, 0, i * .08)), end: () => { T.tone(196, .9, 'sawtooth', .05, -60); T.tone(147, .9, 'sawtooth', .04, -40, .1); }, page: () => T.tone(420, .05, 'triangle', .04) })[n]?.(); }
+};
+
+/* ================= РЕНДЕР СЦЕНЫ ================= */
+const view = $('view'); const vctx = view.getContext('2d'); vctx.imageSmoothingEnabled = false;
+const CACHE = {};
+function bgCanvas(key) { if (CACHE[key]) return CACHE[key]; const [c, x] = mk(W, H); if (key === 'street_ev') BG.street(x, true); else if (key === 'yard_ev') BG.yard(x, true); else if (BG[key]) BG[key](x); return CACHE[key] = c; }
+function fgCanvas(key) { const k = 'fg:' + key; if (CACHE[k]) return CACHE[k]; const [c, x] = mk(W, H); BG[key](x); return CACHE[k] = c; }
+function paw(x, cx, cy, s, col) { ell(x, cx, cy + s, s + 1, s, col); for (const [dx, dy] of [[-s - 1, -s], [-s / 2, -s * 2], [s / 2, -s * 2], [s + 1, -s]]) ell(x, Math.round(cx + dx), Math.round(cy + dy), Math.max(1, Math.round(s * .45)), Math.max(1, Math.round(s * .55)), col); }
+function flagRect(x, x0, y0, w, h) { R(x, x0, y0, w, h, '#2f6b8a'); R(x, x0, y0 + Math.round(h * .5), w, Math.round(h * .5), '#e8e0c8'); paw(x, x0 + Math.round(w / 2), y0 + Math.round(h / 2) - 1, Math.max(2, Math.round(h / 10)), '#d9b45a'); }
+function fakeflag(x, bg) {
+  if (bg === 'hall') { R(x, 110, 6, 164, 78, '#d9b45a'); flagRect(x, 113, 9, 158, 72); }
+  else if (bg === 'council') flagRect(x, 124, 54, 136, 36);
+  else if (bg === 'cabinet') { R(x, 41, 26, 24, 48, '#3a2414'); flagRect(x, 41, 26, 22, 48); }
+}
+DYN.flag = function (c, t, x0, y0) { for (let i = 0; i < 18; i++) { const dy = Math.round(Math.sin(t / 220 - i / 3) * 1.5); R(c, x0 + i, y0 + dy, 1, 6, '#2f6b8a'); R(c, x0 + i, y0 + 6 + dy, 1, 6, '#e8e0c8'); } P(c, x0 + 9, y0 + 5, '#d9b45a'); };
+const POS = { office: { x: 150, y: 96 }, cabinet: { x: 160, y: 76 }, corridor: { x: 162, y: 110 }, committee: { x: 162, y: 94 }, hall: { x: 162, y: 104 }, council: { x: 162, y: 94 }, boardroom: { x: 162, y: 110 }, street: { x: 200, y: 112 }, yard: { x: 170, y: 110 }, yard_ev: { x: 170, y: 110 }, print: { x: 216, y: 110 }, final: { x: 160, y: 120 } };
+const FG = { office: 'officeFg', cabinet: 'cabinetFg', committee: 'committeeFg', hall: 'hallFg', council: 'councilFg', boardroom: 'boardroomFg' };
+const SC = { bg: 'office', who: null, t0: 0, fade: 0, fadeT0: 0, next: null };
+function setScene(bg, who) { if (S.rm) { SC.bg = bg; SC.who = who; SC.t0 = performance.now(); return; } SC.next = { bg, who }; SC.fadeT0 = performance.now(); }
+function renderScene(t) {
+  const x = vctx; const tt = t - SC.t0; const bg = SC.bg;
+  x.drawImage(bgCanvas(bg), 0, 0); fakeflag(x, bg);
+  if (bg === 'street' || bg === 'street_ev') DYN.flag(x, t, 193, 17);
+  if (bg === 'hall') { for (const sx of [19, 287]) for (let k = 0; k < 6; k++) { const w = 20 + ((k * 37 + Math.floor(t / 400)) % 50); R(x, sx + 4, 22 + k * 7, w, 2, k === 0 ? '#7fd6ff' : '#2a5a8a'); } clock(x, 60, 92, 8, 11, 30, DYN.sec(t)); }
+  if (bg === 'cabinet') clock(x, 230, 40, 8, 18, 20, DYN.sec(t), '#c9a65a');
+  if (SC.who && CH[SC.who] && CH[SC.who].pal) { const p = POS[bg] || POS.corridor; const slide = S.rm ? 0 : Math.max(0, 1 - tt / 450); const dx = Math.round(Math.pow(slide, 2) * 140); drawActor(x, { c: SC.who, x: p.x + dx, y: p.y, s: p.s || 2 }, t, false); }
+  if (FG[bg]) x.drawImage(fgCanvas(FG[bg]), 0, 0);
+  if (bg === 'yard' || bg === 'yard_ev' || bg === 'street') DYN.leaves(x, t, 10);
+  if (bg === 'print') { R(x, 212, 120, 148, 16, '#7a1e2e'); for (let k = 0; k < 12; k++) { const xx = 360 - ((t / 30 + k * 26) % 160); if (xx > 212 && xx < 354) R(x, xx, 126, 18, 4, '#f4ecd8'); } }
+  if (SC.next) { const p = Math.min(1, (t - SC.fadeT0) / 260); x.globalAlpha = p; x.fillStyle = '#05050a'; x.fillRect(0, 0, W, H); x.globalAlpha = 1; if (p >= 1) { SC.bg = SC.next.bg; SC.who = SC.next.who; SC.next = null; SC.t0 = t; SC.fadeIn = t; } }
+  else if (SC.fadeIn) { const p = Math.min(1, (t - SC.fadeIn) / 260); x.globalAlpha = 1 - p; x.fillStyle = '#05050a'; x.fillRect(0, 0, W, H); x.globalAlpha = 1; if (p >= 1) SC.fadeIn = 0; }
+}
+function loop(t) { renderScene(t); requestAnimationFrame(loop); }
+
+/* ================= ЛОГИКА ================= */
+const clamp = (v) => Math.max(0, Math.min(100, v));
+const hasFlag = (f) => S.flags.includes(f);
+function eligible(c) {
+  if (c.forced) return false;
+  if (c.roles && !c.roles.includes(S.role)) return false;
+  if (S.used.includes(c.id) && !c.repeat) return false;
+  if (c.req && !hasFlag(c.req)) return false;
+  if (c.minWeek && S.week < c.minWeek) return false;
+  return true;
+}
+const FILLER = [
+  { id: 'quiet1', _filler: 1, type: 'office', who: 'pr', t: 'Тихая неделя', x: 'Никто не пришёл, ничего не сгорело. Пиарщик нервничает: «Тишина — это подозрительно».', o: [ { l: 'Провести приём граждан', e: { dv: 2, el: -1 } }, { l: 'Посидеть с документами', e: { ek: 1 } }, { l: 'Сходить на ужин с нужными людьми', e: { el: 3, kr: 2 } } ] },
+  { id: 'quiet2', _filler: 1, type: 'rounds', who: 'colleague', t: 'Коридоры', x: 'В коридорах обсуждают всё, кроме работы. Борис Барсуков ловит вас у лифта: «Ну что, как оно?»', o: [ { l: 'Поделиться планами', e: { el: 2, sv: 1 } }, { l: 'Отшутиться', e: {} }, { l: 'Спросить, что говорят о вас', e: { el: 1, bz: 1 } } ] }
+];
+function drawCard() {
+  if (S.week === GAME.budgetWeek) { const c = DECK.find(c => c.forced === 'budget' && c.roles.includes(S.role)); if (c && !S.used.includes(c.id)) return c; }
+  if (S.week === GAME.crisisWeek) { if (!S.crisis) { const cs = DECK.filter(c => c.forced === 'crisis'); S.crisis = cs[Math.floor(Math.random() * cs.length)].id; } const c = DECK.find(c => c.id === S.crisis); if (c && !S.used.includes(c.id)) return c; }
+  const req = DECK.filter(c => eligible(c) && c.req); if (req.length && Math.random() < .7) return req[Math.floor(Math.random() * req.length)];
+  const pool = DECK.filter(eligible); const roleC = pool.filter(c => c.roles); const pick = (roleC.length && Math.random() < .35) ? roleC : pool;
+  if (!pick.length) return FILLER[Math.floor(Math.random() * FILLER.length)];
+  return pick[Math.floor(Math.random() * pick.length)];
+}
+function bgOf(c) { if (c.bg) return c.bg; if (c.type === 'office') return ROLES[S.role].bg; if (c.type === 'rounds') return 'corridor'; if (c.type === 'meeting') return c.place || 'committee'; return 'yard'; }
+const TYPEN = { office: 'К вам в кабинет', rounds: 'Вы по кабинетам', meeting: 'На собрании', event: 'Событие', later: 'Последствия', summary: 'Сводка месяца', vote: 'Голосование' };
+
+function nextTurn() {
+  if (S.ended) return;
+  if (S.week > GAME.weeks) return endGame(termEnding());
+  const due = S.queue.findIndex(q => q.week <= S.week);
+  if (due >= 0) { const q = S.queue.splice(due, 1)[0]; return showCard({ _kind: 'later', t: q.t, x: q.x, e: q.e, who: q.who, bg: q.bg, type: 'later', o: [ { l: 'Понятно', e: q.e } ] }); }
+  if (S.week > 1 && (S.week - 1) % 4 === 0 && !S.seen.includes('sum' + S.week)) { S.seen.push('sum' + S.week); return showCard(summaryCard()); }
+  const c = drawCard(); S.used.push(c.id); showCard(c);
+}
+function summaryCard() {
+  const ch = VIS.map(k => ({ k, d: (S.st[k] || 0) - (S.snap[k] ?? S.st[k]) }));
+  const worst = ch.slice().sort((a, b) => a.d - b.d)[0], best = ch.slice().sort((a, b) => b.d - a.d)[0];
+  const HL = { kz: ['Казна пухнет', 'Казна тает'], dv: ['Рейтинг растёт', 'Рейтинг падает'], sv: ['Больше свободы', 'Свобода сжимается'], bz: ['На улицах спокойнее', 'На улицах тревожно'], ek: ['Экономика оживает', 'Экономика буксует'], el: ['Элиты довольны', 'Элиты ропщут'] };
+  let head = 'Месяц прошёл без потрясений'; if (Math.abs(worst.d) >= Math.abs(best.d) && worst.d <= -4) head = HL[worst.k][1]; else if (best.d >= 4) head = HL[best.k][0];
+  const lines = ch.map(c => { const s = STATS.find(z => z.k === c.k); const arrow = c.d >= 6 ? '▲▲' : c.d >= 2 ? '▲' : c.d <= -6 ? '▼▼' : c.d <= -2 ? '▼' : '—'; return `${s.n}: ${arrow}`; }).join(' · ');
+  S.snap = Object.assign({}, S.st);
+  return { _kind: 'summary', type: 'summary', bg: 'print', who: null, t: head, x: `Месяц ${Math.floor((S.week - 1) / 4)} позади. ${lines}. Точных цифр вам не покажут: у политика их не бывает.`, o: [ { l: 'Дальше', e: {} } ] };
+}
+function showCard(c) {
+  S.card = c; S.sel = -1; S.mode = 'card';
+  setScene(bgOf(c), c.who);
+  const ch = c.who ? CH[c.who] : null; const kind = c._kind || c.type;
+  $('cap').textContent = c.t; $('cap').classList.remove('pop'); void $('cap').offsetWidth; $('cap').classList.add('pop');
+  $('ctype').textContent = TYPEN[kind] || ''; $('ctype').className = 'ctype ' + kind;
+  const pc = $('cport'); if (ch && ch.pal) { const x = pc.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, 104, 72); x.drawImage(portrait(c.who), 0, 0); pc.parentElement.hidden = false; $('cname').textContent = ch.name; $('crole').textContent = ch.role; } else { pc.parentElement.hidden = true; $('cname').textContent = kind === 'summary' ? 'Новости' : ''; $('crole').textContent = kind === 'summary' ? 'Вечерний выпуск' : ''; }
+  $('ctext').textContent = c.x;
+  renderOptions(); updHud(); saveGame();
+  $('card').scrollTop = 0;
+}
+function renderOptions() {
+  const box = $('opts'); box.innerHTML = '';
+  S.card.o.forEach((o, i) => { const b = document.createElement('button'); b.className = 'opt' + (i === S.sel ? ' on' : ''); b.innerHTML = `<span class="ok">${i === S.sel ? '✓' : '▸'}</span><span>${o.l}</span>`; b.addEventListener('click', (e) => { e.stopPropagation(); pick(i); }); box.appendChild(b); });
+  const single = S.card.o.length === 1; $('hint').textContent = single ? '' : S.sel < 0 ? 'Выберите решение. Точки над шкалами покажут, что оно затронет.' : 'Нажмите ещё раз, чтобы решить.';
+  previewDots(S.sel >= 0 ? S.card.o[S.sel] : null);
+}
+function pick(i) {
+  if (S.mode !== 'card') return;
+  if (S.card.o.length === 1 || S.sel === i) return confirmChoice(i);
+  S.sel = i; hap.sel(); AU.sfx('sel'); renderOptions();
+}
+function previewDots(o) { VIS.forEach(k => { const d = $('dot-' + k); const v = o && o.e ? Math.abs(o.e[k] || 0) : 0; d.className = 'dot' + (v >= 6 ? ' big' : v > 0 ? ' small' : ''); if (o && o.votes != null && S.card.vote) d.className = 'dot'; }); }
+function applyEffects(e, quiet) {
+  if (!e) return; const before = Object.assign({}, S.st);
+  Object.entries(e).forEach(([k, v]) => { S.st[k] = clamp((S.st[k] || 0) + (k === 'kr' ? v : Math.round(v * 1.25))); });
+  let up = 0, dn = 0; VIS.forEach(k => { const d = S.st[k] - before[k]; const a = $('arr-' + k); if (!d) return; a.textContent = d > 0 ? '▲' : '▼'; a.className = 'arr ' + (d > 0 ? 'up' : 'dn') + (Math.abs(d) >= 7 ? ' big' : ''); setTimeout(() => { a.className = 'arr'; a.textContent = ''; }, 1600); d > 0 ? up++ : dn++; });
+  if (!quiet) { if (dn > up) { hap.note('warning'); AU.sfx('down'); } else if (up) { hap.note('success'); AU.sfx('up'); } }
+  updHud();
+}
+function checkEnd() {
+  if ((S.st.kr || 0) >= 100) return 'arrest';
+  for (const s of STATS) { if (S.st[s.k] <= 0) return s.lo; if (S.st[s.k] >= 100) return s.hi; }
+  return null;
+}
+function termEnding() { return VIS.every(k => S.st[k] >= 30 && S.st[k] <= 70) ? 'term_good' : 'term_ok'; }
+function confirmChoice(i) {
+  const c = S.card, o = c.o[i]; S.mode = 'busy'; hap.hit(c.vote ? 'heavy' : 'medium'); AU.sfx('ok');
+  if (o.set && !hasFlag(o.set)) S.flags.push(o.set);
+  if (c._kind !== 'later') applyEffects(o.e); else applyEffects(c.e);
+  if (o.later) S.queue.push({ week: S.week + o.later.in, t: o.later.t, x: o.later.x, e: o.later.e, who: c.who, bg: bgOf(c) });
+  if (o.veto) S.queue.push(S.st.el < 40 ? { week: S.week + 3, t: 'Вето преодолено', x: 'Парламент преодолел ваше вето двумя третями голосов. Закон вступил в силу без вашей подписи.', e: { sv: -6, el: -4 }, who: 'speaker', bg: 'hall' } : { week: S.week + 3, t: 'Вето устояло', x: 'Двух третей набрать не удалось. Закон отправлен в архив.', e: { sv: 2, dv: 2 }, who: 'speaker', bg: 'hall' });
+  if (!c._kind) S.log.push({ w: S.week, t: c.t, c: o.l });
+  const end = checkEnd(); if (end) return setTimeout(() => endGame(end), 700);
+  if (c.vote) return showVote(c, o);
+  advanceWeek(c);
+}
+function advanceWeek(c) { if (!c._kind || c._kind === 'summary' || c._kind === 'later') { if (!c._kind) S.week++; } setTimeout(() => { S.mode = 'card'; nextTurn(); }, S.rm ? 50 : 450); }
+function showVote(c, o) {
+  const elMod = Math.round((S.st.el - 50) / 4); const forV = Math.max(0, Math.min(450, c.vote.base + (o.votes || 0) + elMod)); const pass = forV >= c.vote.need; const res = pass ? c.vote.pass : c.vote.fail;
+  AU.sfx('vote'); S.mode = 'vote';
+  $('panel').innerHTML = `<div class="vote"><div class="vh">Табло</div><div class="vrow"><span>За</span><b id="vfor">0</b></div><div class="vbar"><i id="vfill"></i><em style="left:${c.vote.need / 450 * 100}%">${c.vote.need}</em></div><div class="vres ${pass ? 'ok' : 'bad'}" id="vres" hidden><b>${res.t}</b><p>${res.x}</p></div><button class="opt next" id="vnext" hidden>Дальше</button></div>`;
+  $('panel').hidden = false;
+  const t0 = performance.now(); const step = (t) => { const p = Math.min(1, (t - t0) / 1600); $('vfor').textContent = Math.round(forV * p); $('vfill').style.width = (forV / 450 * 100 * p) + '%'; if (p < 1) requestAnimationFrame(step); else { $('vres').hidden = false; $('vnext').hidden = false; hap.note(pass ? 'success' : 'error'); applyEffects(res.e); const end = checkEnd(); if (end) { setTimeout(() => endGame(end), 900); } } }; requestAnimationFrame(step);
+  $('vnext').onclick = (e) => { e.stopPropagation(); $('panel').hidden = true; S.week++; S.mode = 'card'; nextTurn(); };
+}
+function endGame(id) {
+  const E = ENDINGS[id]; S.ended = id; S.mode = 'end'; clearSave(); AU.sfx('end'); hap.note('error');
+  setScene('final', null);
+  const rows = STATS.map(s => `<div class="er"><span>${s.n}</span><i><b style="width:${S.st[s.k]}%"></b></i><em>${S.st[s.k]}</em></div>`).join('') + `<div class="er hidden"><span>Коррупция (скрытая)</span><i><b style="width:${S.st.kr}%"></b></i><em>${S.st.kr}</em></div>`;
+  $('endbox').innerHTML = `<div class="etype">${ROLES[S.role].full} · неделя ${Math.min(S.week, GAME.weeks)} из ${GAME.weeks}</div><h2>${E.t}</h2><p class="etext">${E.x}</p><div class="erows">${rows}</div><p class="enote">${E.note}</p><div class="ebtn"><button data-act="again">Ещё раз · ${ROLES[S.role].n}</button><button data-act="roles" class="alt">Другая роль</button><button data-act="log" class="alt">Журнал решений</button></div>`;
+  $('end').hidden = false; tgBack(false);
+}
+
+/* ================= HUD ================= */
+function updHud() {
+  STATS.forEach(s => { const v = S.st[s.k] ?? 50; const b = $('bar-' + s.k); b.style.height = v + '%'; b.className = v <= 15 || v >= 85 ? 'danger' : v <= 30 || v >= 70 ? 'warn' : ''; });
+  $('hweek').textContent = S.role ? `Неделя ${Math.min(S.week, GAME.weeks)}/${GAME.weeks}` : ''; $('hrole').textContent = S.role ? ROLES[S.role].n : '';
+  $('bsoundt').textContent = S.sound ? 'Звук вкл' : 'Звук';
+  $('qn').textContent = S.queue.length; $('qn').hidden = !S.queue.length;
+}
+
+/* ================= ОКНА ================= */
+function openModal(title, html) { $('mtitle').textContent = title; $('mbody').innerHTML = html; $('modal').hidden = false; $('mbody').scrollTop = 0; tgBack(true); }
+function closeModal() { $('modal').hidden = true; tgBack(false); }
+function openLog() {
+  const rows = S.log.slice().reverse().map(l => `<li><span class="lw">нед. ${l.w}</span><b>${l.t}</b><span>${l.c}</span></li>`).join('') || '<li class="muted">Решений пока нет.</li>';
+  openModal('Журнал решений', `<p class="pnote">Ожидают последствий: <b>${S.queue.length}</b>. Что именно и когда — узнаете сами.</p><ol class="log">${rows}</ol>`);
+}
+function openRole() { const r = ROLES[S.role]; if (!r) return; openModal(r.full, `<dl class="rl"><dt>Что можете</dt><dd>${r.can}</dd><dt>Чего не можете</dt><dd>${r.cant}</dd><dt>Особенность</dt><dd>${r.twist}</dd></dl><h3>Шкалы</h3><ul class="sl">${STATS.map(s => `<li><b>${s.n}</b> — 0 или 100 означает конец игры: «${ENDINGS[s.lo].t}» или «${ENDINGS[s.hi].t}».</li>`).join('')}<li><b>Коррупция</b> — скрытая шкала. Растёт от подарков и сделок. На 100 — «${ENDINGS.arrest.t}».</li></ul><p class="pnote">Часть последствий приходит через несколько недель. Каждые четыре недели — сводка новостей. Бюджет — на ${GAME.budgetWeek}-й неделе, кризис — на ${GAME.crisisWeek}-й.</p>`); }
+function openMenu() { openModal('Меню', `<div class="menu"><button data-act="close">Продолжить</button><button data-act="role">Моя роль и правила</button><button data-act="log">Журнал решений</button><button data-act="sound">${S.sound ? 'Выключить звук' : 'Включить звук'}</button><button data-act="rm">${S.rm ? 'Обычное движение' : 'Меньше движения'}</button>${tgv('8.0') ? `<button data-act="fs">${TG.isFullscreen ? 'Выйти из полноэкранного' : 'Полный экран'}</button>` : ''}<button data-act="roles">Сменить роль (начать заново)</button></div><p class="pnote">18+ · сатира · страна Мурландия и все персонажи вымышлены.</p>`); }
+
+/* ================= СТАРТ ================= */
+function startRole(r) {
+  Object.assign(S, { role: r, week: 1, used: [], flags: [], queue: [], log: [], ended: null, crisis: null, seen: [] });
+  S.st = { kz: 50, dv: 50, sv: 50, bz: 50, ek: 50, el: 50, kr: 10 }; S.snap = Object.assign({}, S.st);
+  $('start').hidden = true; $('end').hidden = true; closeModal(); hap.hit('medium');
+  if (S.sound) AU.init();
+  showCard({ _kind: 'later', type: 'later', bg: ROLES[r].bg, who: r, t: 'Первый день', x: `${ROLES[r].full}. ${ROLES[r].can} ${ROLES[r].cant} Впереди ${GAME.weeks} недель. Не дайте ни одной шкале упасть до нуля или взлететь до ста.`, o: [ { l: 'К работе', e: {} } ] });
+  $('ctype').textContent = 'Назначение';
+}
+function showStart() {
+  $('start').hidden = false; $('end').hidden = true;
+  const box = $('roles'); box.innerHTML = '';
+  Object.entries(ROLES).forEach(([k, r]) => { const b = document.createElement('button'); b.className = 'rolec'; b.innerHTML = `<canvas width="104" height="72"></canvas><span><b>${r.n}</b><small>${r.twist}</small></span>`; const x = b.querySelector('canvas').getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(portrait(k), 0, 0); b.addEventListener('click', (e) => { e.stopPropagation(); startRole(k); }); box.appendChild(b); });
+  loadSave((sv) => { const b = $('bcont'); if (sv && sv.role && !sv.ended) { b.hidden = false; b.textContent = `Продолжить · ${ROLES[sv.role].n}, неделя ${sv.week}`; b.onclick = (e) => { e.stopPropagation(); Object.assign(S, { role: sv.role, week: sv.week, st: sv.st, used: sv.used || [], flags: sv.flags || [], queue: sv.queue || [], log: sv.log || [], snap: sv.snap || sv.st, crisis: sv.crisis || null, ended: null, seen: [] }); $('start').hidden = true; hap.hit('medium'); const c = sv.cardData || DECK.find(d => d.id === sv.card) || FILLER.find(d => d.id === sv.card); if (c) showCard(c); else nextTurn(); }; } else b.hidden = true; });
+}
+
+/* ================= УПРАВЛЕНИЕ ================= */
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act; e.stopPropagation();
+  if (a === 'close') closeModal(); else if (a === 'menu') openMenu(); else if (a === 'log') openLog(); else if (a === 'role') openRole();
+  else if (a === 'sound') { S.sound = !S.sound; savePrefs(); if (S.sound) { AU.init(); AU.ctx?.resume?.(); } updHud(); if (!$('modal').hidden) openMenu(); }
+  else if (a === 'rm') { S.rm = !S.rm; savePrefs(); document.body.classList.toggle('rm', S.rm); openMenu(); }
+  else if (a === 'fs') { try { TG.isFullscreen ? TG.exitFullscreen() : TG.requestFullscreen(); } catch (er) {} closeModal(); }
+  else if (a === 'roles') { clearSave(); closeModal(); S.role = null; S.ended = null; showStart(); }
+  else if (a === 'again') { const r = S.role; startRole(r); }
+});
+$('mclose').addEventListener('click', closeModal);
+$('modal').addEventListener('click', (e) => { if (!e.target.closest('.mbox')) closeModal(); });
+const isEsc = (e) => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
+window.addEventListener('keydown', (e) => {
+  if (isEsc(e)) { e.preventDefault(); if (!$('modal').hidden) closeModal(); else if (S.role && !S.ended) openMenu(); return; }
+  if (!$('modal').hidden || S.mode !== 'card' || !S.card) { if (S.mode === 'vote' && (e.key === 'Enter' || e.key === ' ') && !$('vnext').hidden) { e.preventDefault(); $('vnext').click(); } return; }
+  const n = S.card.o.length;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); S.sel = (S.sel + 1) % n; hap.sel(); renderOptions(); }
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); S.sel = (S.sel - 1 + n) % n; renderOptions(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (n === 1) confirmChoice(0); else if (S.sel >= 0) confirmChoice(S.sel); }
+  else if (/^[1-3]$/.test(e.key) && +e.key <= n) { pick(+e.key - 1); }
+}, true);
+document.addEventListener('visibilitychange', () => { if (document.hidden) { saveGame(); try { AU.ctx && AU.ctx.suspend(); } catch (e) {} } else { try { S.sound && AU.ctx && AU.ctx.resume(); } catch (e) {} } });
+
+function fit() { const st = $('stage'); const h = (inTG && TG.viewportStableHeight) || innerHeight; st.classList.toggle('land', innerWidth > h * 1.2 && h < 560); }
+addEventListener('resize', fit);
+document.body.classList.toggle('rm', S.rm);
+fit(); S.st = { kz: 50, dv: 50, sv: 50, bz: 50, ek: 50, el: 50, kr: 10 }; updHud(); SC.bg = 'cabinet'; SC.who = null; requestAnimationFrame(loop); showStart();
+
+</script>
+</body>
+</html>
