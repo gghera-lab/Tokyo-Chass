@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0e0d12">
+<title>Тихий час</title>
+<script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400&family=Press+Start+2P&display=swap">
+<style>
+
+/* Макет: сцена 16:9 (или 9:16 на телефоне), масштабируется целиком; модальные окна — обычная адаптивная вёрстка поверх */
+:root{
+  --ink:#0e0d12; --night:#18171e; --plum:#24222c; --line:#4e4a5c; --gold:#e0c070; --cream:#f4ead2; --muted:#b9b0cf;
+  --ok:#6fd08c; --bad:#e0485a; --int:#ffb347; --fic:#b48cff; --hyp:#f2e08a; --cyan:#7fd6ff;
+  --f-cap:'Balsamiq Sans','Comic Sans MS','Trebuchet MS',cursive; --f-body:'PT Sans','Segoe UI',Roboto,Arial,sans-serif; --f-px:'Press Start 2P','Courier New',monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+
+
+#hpips{display:flex;gap:3px}#hpips i{width:9px;height:9px;background:#3a3150;display:block}#hpips i.on{background:var(--gold)}
+
+.ph{font:13px/1.4 var(--f-px);color:var(--gold);margin:0 0 12px;letter-spacing:.04em}
+.ph.ok{color:var(--ok)}.ph.bad{color:var(--bad)}.ph.int{color:var(--int)}
+.pnote{color:var(--muted);font-size:.82em;margin:12px 0 0}
+.pnote a,.src a,#modal a{color:var(--cyan)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cols2>*,.cols3>*{min-width:0}
+ul.cards{list-style:none;margin:0;padding:0;display:grid;gap:8px}ul.cards li{background:var(--plum);border-left:6px solid var(--line);padding:8px 12px}
+.card{background:var(--plum);border:3px solid #000;box-shadow:inset 0 0 0 2px var(--line);padding:12px 14px;min-width:0}
+.card b{display:block;font-family:var(--f-cap);font-size:1.12em;margin-bottom:6px;color:#fff}
+.card p{margin:0 0 8px}
+.card.ok{box-shadow:inset 0 0 0 3px var(--ok)}.card.bad{box-shadow:inset 0 0 0 3px var(--bad)}.card.int,.card.warn,.card.amber{box-shadow:inset 0 0 0 3px var(--int)}.card.cyan{box-shadow:inset 0 0 0 3px var(--cyan)}.card.green{box-shadow:inset 0 0 0 3px var(--ok)}
+.chip{display:inline-block;font:9px/1 var(--f-px);padding:5px 7px;color:#000;vertical-align:middle;letter-spacing:.03em}
+.chip.ok{background:var(--ok)}.chip.fic{background:var(--fic)}.chip.int{background:var(--int)}.chip.hyp{background:var(--hyp)}
+.pass{display:flex;gap:22px;background:#efe3c4;color:#1d1830;padding:18px;border:4px solid #000;box-shadow:inset 0 0 0 4px #c99a3a}
+.pass-photo{width:120px;height:140px;background:#3f8a5a;display:grid;place-items:center;border:3px solid #1d1830;flex:none}
+.pass-photo canvas{width:102px;height:99px;image-rendering:pixelated}
+.pass-h{font:12px/1.4 var(--f-px);color:#7a1e2e;margin-bottom:10px}
+.pass dl{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}.pass dt{font-weight:700}.pass dd{margin:0}
+.map{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.port .map{grid-template-columns:repeat(2,1fr)}
+.room{background:#1b1630;border:3px dashed #4a3f6a;padding:10px;min-height:66px;display:flex;flex-direction:column;justify-content:space-between}
+.room.open{border:3px solid var(--gold);background:#2a2342}.room small{color:var(--muted);font-size:.75em}
+.paper{background:#efe3c4;color:#1d1830;padding:18px 22px;border:4px solid #000;font-family:var(--f-body);position:relative}
+.paper .dhead{text-align:center;font-weight:700;letter-spacing:.03em;margin-top:0}.paper .dtitle{font-weight:700;text-align:center}.paper .dnote{font-style:italic;color:#6b5a3a}
+.paper mark{background:#f2c14e;color:#1d1830;padding:0 3px}
+.paper.big{font-size:18px;line-height:1.5}.paper .stamp{position:absolute;right:12px;top:12px}
+.amend{display:grid;gap:8px}
+.arow{display:grid;grid-template-columns:90px 1fr auto;gap:10px;text-align:left;background:var(--plum);color:var(--cream);border:3px solid #000;box-shadow:inset 0 0 0 2px var(--line);padding:10px 14px;font:inherit;cursor:pointer;align-items:center}
+.arow .an{font:12px var(--f-px);color:var(--gold)}.arow .adet{grid-column:1/-1;display:none;font-size:.9em;border-top:2px dashed var(--line);padding-top:8px}
+.arow.open .adet{display:block}.arow:hover,.arow:focus-visible{box-shadow:inset 0 0 0 3px var(--gold);outline:none}
+.st{font:10px var(--f-px);padding:5px 7px;color:#000}.st.ok{background:var(--ok)}.st.bad{background:var(--bad)}.st.warn{background:var(--int)}
+.votes .vrow{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;font:14px var(--f-px);padding:6px 0;border-bottom:2px dashed #3a3150}
+.votes .vrow b{font-size:22px;color:#fff;font-weight:400;font-variant-numeric:tabular-nums}
+.led{width:18px;height:18px;display:block}.led.g{background:var(--ok)}.led.r{background:var(--bad)}.led.y{background:var(--gold)}.led.n{background:#9aa3b5}
+.bar{position:relative;height:26px;background:#1b1630;border:3px solid #000;margin:22px 0 6px}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(90deg,var(--ok) 0 10px,#4fae6c 10px 12px);width:0}
+.bar .mark{position:absolute;top:-22px;transform:translateX(-50%);font:10px var(--f-px);color:var(--gold)}.bar .mark::after{content:'';position:absolute;left:50%;top:18px;width:3px;height:30px;background:var(--gold)}
+.bar .m2{color:var(--cyan)}.bar .m2::after{background:var(--cyan)}
+.flow{display:grid;gap:8px;justify-items:center}.fb{background:var(--plum);border:3px solid #000;box-shadow:inset 0 0 0 2px var(--line);padding:9px 14px;text-align:center;max-width:100%}
+.fb.ok{box-shadow:inset 0 0 0 3px var(--ok)}.fb.bad{box-shadow:inset 0 0 0 3px var(--bad)}.fb.int{box-shadow:inset 0 0 0 3px var(--int)}.fb.note{box-shadow:inset 0 0 0 3px var(--fic);font-size:.9em}
+.fa{font:11px var(--f-px);color:var(--gold)}.fsplit{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;width:100%}.fsplit .fb{font-size:.9em}
+.flow.wide .fb{font-size:.88em}
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.port .stages{grid-template-columns:1fr 1fr}
+.stage{background:var(--plum);border:3px solid #000;padding:12px;display:flex;flex-direction:column;gap:4px;position:relative}
+.stage .sn{font:12px var(--f-px);color:#000;background:var(--gold);width:28px;height:28px;display:grid;place-items:center}
+.stage b{font-family:var(--f-cap);font-size:1.15em}.stage em{font-style:normal;color:var(--fic);font-family:var(--f-px);font-size:.6em}.stage small{color:var(--muted);font-size:.78em}
+.tbl{overflow-x:auto}.tbl table{border-collapse:collapse;width:100%;font-size:.9em}.tbl th,.tbl td{border:2px solid #3a3150;padding:7px 10px;text-align:left;vertical-align:top}.tbl th{background:#2a2342;color:var(--gold);font-weight:700}
+.lvls{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.port .lvls{grid-template-columns:repeat(2,1fr)}
+.lvl{background:#2a2f4a;color:var(--cream);border:3px solid #000;padding:8px;font:inherit;font-size:.78em;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.lvl span{font:12px var(--f-px);color:var(--cyan)}.lvl.on,.lvl:hover,.lvl:focus-visible{box-shadow:inset 0 0 0 3px var(--cyan);outline:none}
+.lvlbody h4{margin:14px 0 6px;font-family:var(--f-cap);font-size:1.2em}
+dl.lv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:.9em}dl.lv dt{color:var(--gold)}dl.lv dd{margin:0}
+ul.kv{list-style:none;padding:0;margin:0;font-size:.86em;display:grid;gap:4px}ul.kv i{font-style:normal;color:var(--gold);display:inline-block;min-width:110px;margin-right:6px}
+.small{font-size:.82em;color:var(--muted)}.src{font-size:.78em;color:var(--muted);display:block;margin-top:6px}
+.diff del{background:rgba(224,72,90,.3);color:#ffd0d6}.diff ins{background:rgba(111,208,140,.25);color:#d6ffe2;text-decoration:none}
+ul.check{list-style:none;padding:0;margin:0;display:grid;gap:8px}ul.check li{background:var(--plum);padding:8px 12px;border-left:6px solid var(--ok)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.btnrow button,.menu button{font:13px/1.2 var(--f-px);background:var(--cream);color:var(--ink);border:3px solid #000;box-shadow:inset -4px -4px 0 #c8bb9c;padding:12px 14px;cursor:pointer;text-align:left}
+.btnrow button:hover,.menu button:hover,.btnrow button:focus-visible,.menu button:focus-visible{background:var(--gold);outline:none}
+
+
+
+
+/* модальные окна — вне масштабируемой сцены */
+#modal{position:fixed;inset:0;background:rgba(8,6,14,.82);display:grid;place-items:center;z-index:50;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-bottom,0px))}
+.mbox{outline:none;width:min(1100px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--night);border:4px solid var(--cream);box-shadow:0 0 0 4px #000,10px 10px 0 rgba(0,0,0,.5)}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:3px solid #000;background:var(--plum)}
+#mtitle{font:14px/1.4 var(--f-px);color:var(--gold);margin:0}
+#mclose{font:12px var(--f-px);background:var(--cream);color:#000;border:3px solid #000;padding:9px 12px;cursor:pointer}
+#mclose:hover,#mclose:focus-visible{background:var(--gold);outline:none}
+#mtabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 0}
+.tab{font:11px var(--f-px);background:#2a2342;color:var(--cream);border:3px solid #000;padding:9px 11px;cursor:pointer}.tab.on,.tab:hover,.tab:focus-visible{background:var(--gold);color:#000;outline:none}
+#mbody{overflow:auto;padding:16px 18px 22px;font-size:17px;line-height:1.5}
+#mbody h3{font:12px/1.5 var(--f-px);color:var(--gold);margin:20px 0 10px}
+#mbody .muted,.muted{color:var(--muted)}
+.factcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.factcols section{min-width:0}.factcols ul{padding-left:18px;margin:0;display:grid;gap:10px}.factcols h3{margin-top:0}
+ol.tl{list-style:none;padding:0;margin:0;display:grid;gap:6px}ol.tl li{display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:center;background:var(--plum);padding:8px 12px;border-left:6px solid var(--fic)}
+ol.tl.real li{border-left-color:var(--ok)}ol.tl li.lock{opacity:.55}.td{font:11px var(--f-px);color:var(--gold)}
+ol.tl button{font:10px var(--f-px);background:var(--cream);border:3px solid #000;padding:7px 9px;cursor:pointer}
+@media (max-width:560px){ol.tl li{grid-template-columns:1fr}}
+.evgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ev{background:var(--plum);border:3px solid #000;padding:10px 12px;min-width:0}.ev b{display:block;font-family:var(--f-cap);font-size:1.08em;margin:6px 0 4px}.ev p{margin:0;font-size:.92em}.ev.lock{opacity:.4;border-style:dashed}
+.evh{display:flex;justify-content:space-between;gap:8px;align-items:center}.evh small{color:var(--muted)}
+.ev.fact{box-shadow:inset 0 0 0 2px var(--ok)}.ev.fic{box-shadow:inset 0 0 0 2px var(--fic)}.ev.int{box-shadow:inset 0 0 0 2px var(--int)}.ev.hyp{box-shadow:inset 0 0 0 2px var(--hyp)}
+.boardwrap{overflow-x:auto}.board{position:relative;min-width:760px;aspect-ratio:16/10;background:#b07a45;border:6px solid #6b4026;background-image:radial-gradient(#a06a38 1px,transparent 1px);background-size:6px 6px;max-width:100%}
+.board svg{position:absolute;inset:0;width:100%;height:100%}.board line{stroke-width:3;vector-effect:non-scaling-stroke}.board line.f{stroke:#1f8a4a}.board line.h{stroke:#f2c14e;stroke-dasharray:8 6}
+.bc{position:absolute;width:22%;min-height:15%;background:#f4ecd8;color:#1d1830;padding:6px 8px;font-size:13px;line-height:1.25;box-shadow:3px 3px 0 rgba(0,0,0,.35);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.bc.lock{background:rgba(244,236,216,.35);border:2px dashed #6b4026;color:#4e2d1a;justify-content:center;align-items:center}
+.bc b{font-weight:700}.bl{position:absolute;transform:translate(-50%,-50%);background:#1d1830;color:#fff;font-size:11px;padding:2px 6px;white-space:nowrap;pointer-events:none}.bl.h{color:#f2e08a}.bl.f{color:#9ff0b8}
+.lg{display:inline-block;width:26px;height:0;border-top:3px solid #1f8a4a;vertical-align:middle}.lg.h{border-top:3px dashed #f2c14e}
+ul.srcl,ul.laws{padding-left:18px;margin:0;display:grid;gap:8px}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+article.sc{border-top:3px dashed var(--line);padding-top:6px}article.sc h3 small{color:var(--muted);font-family:var(--f-body);font-size:12px;margin-left:8px}
+article.sc dl,.charc dl{display:grid;grid-template-columns:130px 1fr;gap:4px 14px;margin:0;font-size:.95em}article.sc dt,.charc dt{color:var(--gold)}article.sc dd,.charc dd{margin:0;min-width:0}
+@media (max-width:560px){article.sc dl,.charc dl{grid-template-columns:1fr}}
+ol.sl{padding-left:20px;margin:0;display:grid;gap:4px}.capw{font:9px var(--f-px);background:#000;color:#fff;padding:3px 5px;margin-left:4px}
+.chars{display:grid;gap:18px}.charc{display:grid;grid-template-columns:auto 1fr;gap:18px;background:var(--plum);padding:14px;border:3px solid #000}
+.charc canvas{width:136px;height:132px;image-rendering:pixelated;background:#1b1630;border:3px solid #000}
+.charc h3{font-family:var(--f-cap)!important;font-size:22px!important;color:#fff!important;margin:0!important}.charc .role{color:var(--muted);margin:2px 0 8px}
+@media (max-width:560px){.charc{grid-template-columns:1fr}}
+.help ul{padding-left:18px;display:grid;gap:6px}kbd{font:11px var(--f-px);background:var(--cream);color:#000;padding:3px 6px;border:2px solid #000}
+
+.hcalm b.ok{color:var(--ok)}.hcalm b.warn{color:var(--int)}.hcalm b.bad{color:var(--bad)}
+#hpips .bar{display:block;width:70px;height:9px;background:#2a2733;position:relative}#hpips .bar i{display:block;height:100%}#hpips .bar i.ok{background:var(--ok)}#hpips .bar i.warn{background:var(--int)}#hpips .bar i.bad{background:var(--bad)}
+.phone{max-width:420px;margin:0 auto;background:#111016;border:4px solid #000;box-shadow:inset 0 0 0 3px #3a3644;padding:16px 18px;font-size:.9em}
+.ph-top{display:flex;justify-content:space-between;font:10px var(--f-px);color:var(--muted)}.ph-name{margin:10px 0 6px;color:var(--muted)}
+.ph-idx{display:flex;align-items:baseline;gap:12px}.ph-idx b{font:44px/1 var(--f-px)}.ph-idx.ok b{color:var(--ok)}.ph-idx.warn b{color:var(--int)}.ph-idx.bad b{color:var(--bad)}
+.ph-scale{position:relative;height:10px;margin:18px 0 22px;background:linear-gradient(90deg,var(--bad) 0 30%,var(--int) 30% 50%,var(--ok) 50%)}.ph-scale i{position:absolute;top:-6px;width:4px;height:22px;background:#fff;transform:translateX(-2px)}.ph-scale span{position:absolute;top:14px;font:9px var(--f-px);color:var(--muted);transform:translateX(-50%)}
+.ph-rules{padding-left:18px;margin:0 0 12px;display:grid;gap:4px}.ph-btn{width:100%;font:11px var(--f-px);background:var(--bad);color:#fff;border:3px solid #000;padding:12px;cursor:default}
+body.rm *{animation-duration:0s!important;transition:none!important}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.hcalm.flash{animation:flash .6s steps(3)}@keyframes flash{50%{box-shadow:inset 0 0 0 3px var(--bad)}}
+#hpips .bar{display:block;height:8px;background:#2a2733;position:relative}
+</style>
+</head>
+<body>
+<style>
+/* Мобильная раскладка Telegram Mini App: HUD · экран 16:9 · диалог · нижняя панель */
+html,body{height:100%;overscroll-behavior:none}
+body{margin:0;padding:0!important;background:var(--ink);color:var(--cream);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+#wrap{position:fixed;inset:0;height:var(--tg-viewport-stable-height,100dvh);display:flex;justify-content:center;background:var(--ink)}
+#stage{position:relative;display:flex;flex-direction:column;width:100%;max-width:560px;height:100%;outline:none;box-sizing:border-box;
+  padding-top:max(env(safe-area-inset-top,0px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px)));
+  padding-bottom:max(env(safe-area-inset-bottom,0px),var(--tg-safe-area-inset-bottom,0px));
+  padding-left:max(env(safe-area-inset-left,0px),var(--tg-safe-area-inset-left,0px));padding-right:max(env(safe-area-inset-right,0px),var(--tg-safe-area-inset-right,0px))}
+#hud{display:flex;align-items:center;gap:6px;padding:6px 10px;flex-wrap:nowrap;min-height:34px;box-sizing:border-box}
+#hud .hl{display:flex;gap:6px;align-items:center;min-width:0;flex:1}
+.hchip{background:var(--plum);border:2px solid #000;padding:5px 7px;font:9px/1.2 var(--f-px);color:var(--cream);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.hchip b{font-weight:400}
+#hdate{overflow:hidden;text-overflow:ellipsis}
+#hep{font:11px/1.2 var(--f-body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;text-align:right}
+#hpips .bar{width:48px!important}
+#screen{position:relative;width:100%;aspect-ratio:16/9;flex:none;background:#000;overflow:hidden}
+#view{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+#crt{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 62%,rgba(0,0,0,.45) 100%)}
+#hot{position:absolute;inset:0;cursor:pointer}
+.hs{position:absolute;background:transparent;border:0;padding:0;cursor:pointer}
+.hs i{position:absolute;right:-5px;top:-5px;width:12px;height:12px;background:var(--gold);transform:rotate(45deg);box-shadow:0 0 0 2px #000;animation:pulse 1.4s steps(4) infinite}
+.hs span{display:none}
+.hs:focus-visible{outline:3px dashed var(--gold)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#cap{position:absolute;left:0;right:0;top:7%;text-align:center;font:700 clamp(22px,8.2vw,40px)/1 var(--f-cap);color:#fff;-webkit-text-stroke:clamp(5px,1.8vw,8px) #000;paint-order:stroke fill;text-transform:uppercase;pointer-events:none;text-shadow:0 4px 0 rgba(0,0,0,.5);padding:0 8px}
+#cap.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.4) rotate(-4deg);opacity:0}100%{transform:none;opacity:1}}
+#toast{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);max-width:92%;background:#000;color:var(--gold);font:10px/1.35 var(--f-px);padding:8px 10px;border:2px solid var(--gold);pointer-events:none;text-align:center;white-space:normal}
+#toast.in{animation:rise .3s steps(4)}
+@keyframes rise{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+#lower{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px 10px 8px}
+#panel{position:relative;flex:0 1 auto;max-height:52%;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(18,16,24,.98);border:3px solid var(--gold);box-shadow:0 0 0 3px #000;padding:12px 12px 14px;font-size:14px;line-height:1.38;animation:rise .3s steps(5)}
+#panel .pclose{position:sticky;float:right;top:0;margin:-8px -8px 0 6px;background:#000;color:var(--gold);border:0;font:14px var(--f-px);width:36px;height:36px;z-index:2}
+#dlg{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;background:rgba(14,12,20,.96);border:3px solid var(--cream);box-shadow:0 0 0 3px #000,inset 0 0 0 3px #2e2a3a;padding:12px 12px 10px;overflow:auto;-webkit-overflow-scrolling:touch;cursor:pointer}
+#dlg.narr{border-color:var(--fic)}#dlg.narr #dtext{font-style:italic;color:#e9e0ff}#dlg.narr #drole{display:none}
+.dhead{display:flex;gap:10px;align-items:center;min-height:0}
+.dport{flex:none;width:64px;height:44px;border:2px solid #000;box-shadow:0 0 0 2px var(--gold);background:#2a2342}
+.dport canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.dtxt{min-width:0}
+#dname{display:inline-block;background:var(--gold);color:var(--ink);font:10px/1 var(--f-px);padding:6px 8px;border:2px solid #000;margin-bottom:5px}
+#drole{font:9px/1.35 var(--f-px);color:var(--muted)}
+#dtext{font:17px/1.42 var(--f-body);color:#fff;min-height:2.8em}
+#dnext{position:absolute;right:10px;bottom:6px;color:var(--gold);font:12px var(--f-px);animation:pulse 1s steps(2) infinite}
+#choices{display:flex;flex-direction:column;gap:7px}
+.choice{text-align:left;background:var(--plum);color:var(--cream);border:2px solid #000;box-shadow:inset 0 0 0 2px var(--line);font:600 16px/1.25 var(--f-body);padding:12px 12px;min-height:46px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.choice .ck{font:11px var(--f-px);color:var(--gold)}
+.choice.on,.choice:active{box-shadow:inset 0 0 0 3px var(--gold);background:#3a2f5a}
+#bar{flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 8px 8px;background:#09080d;border-top:2px solid #000}
+#bar button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;background:var(--plum);color:var(--cream);border:2px solid #000;font:8px/1.1 var(--f-px);cursor:pointer;padding:4px 2px}
+#bar button .ic{font:16px/1 var(--f-body)}
+#bar button:active{background:var(--gold);color:#000}
+#bar button .n{position:absolute;top:3px;right:4px;background:var(--gold);color:#000;font:8px/1 var(--f-px);padding:2px 3px}
+#start{position:absolute;inset:0;display:grid;place-items:center;overflow:auto;background:radial-gradient(ellipse at 50% 30%,rgba(60,20,24,.75),rgba(10,9,14,.97) 70%);z-index:5;padding:20px}
+.st-in{text-align:center;max-width:420px}
+.st-in h1{font:700 clamp(46px,15vw,76px)/.95 var(--f-cap);color:#fff;-webkit-text-stroke:9px #000;paint-order:stroke fill;margin:0;text-shadow:0 6px 0 rgba(0,0,0,.5)}
+.st-in .sub{font:11px/1.6 var(--f-px);color:var(--gold);margin:16px 0 10px}
+.st-in p{font-size:16px;line-height:1.45;margin:0 0 20px}
+.st-in .row{display:grid;gap:10px}
+.st-in button{font:12px/1 var(--f-px);background:var(--gold);color:#000;border:3px solid #000;box-shadow:inset -4px -4px 0 #b88a2e;padding:16px 14px;min-height:50px;cursor:pointer}
+.st-in button.alt{background:var(--cream);box-shadow:inset -4px -4px 0 #c8bb9c}
+.st-in small{display:block;margin-top:16px;color:var(--muted);font:9px/1.7 var(--f-px)}
+.st-age{display:inline-block;border:2px solid var(--bad);color:var(--bad);font:11px var(--f-px);padding:5px 7px;margin-bottom:12px}
+/* компоненты панели под мобильный размер */
+.cols2,.cols3,.stages,.map{grid-template-columns:1fr!important}
+.votes .vrow{font-size:11px}.votes .vrow b{font-size:18px}
+.phone{max-width:none;font-size:14px}.ph-idx b{font-size:34px}
+.tbl table{font-size:12.5px}
+.paper{padding:12px 14px;font-size:14px}
+#mbody{font-size:15px;padding:12px 14px 20px}
+.mbox{max-height:100%}
+.mhead{padding:10px 12px}#mtitle{font-size:11px}#mclose{padding:10px 12px;min-height:40px}
+.tab{padding:10px 9px;min-height:40px}
+.menu button,.btnrow button{min-height:48px}
+.board{min-width:640px}
+ol.tl li{grid-template-columns:1fr}
+/* горизонтальный телефон: экран слева, текст справа */
+#stage.land{max-width:none;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'hud hud' 'screen lower' 'bar bar'}
+#stage.land #hud{grid-area:hud}#stage.land #screen{grid-area:screen;align-self:center}#stage.land #lower{grid-area:lower}#stage.land #bar{grid-area:bar;grid-template-columns:repeat(5,1fr)}
+#stage.land #bar button{min-height:38px;flex-direction:row}
+@media (max-height:520px){#start{place-items:start center;padding:12px}.st-in h1{font-size:40px;-webkit-text-stroke:7px #000}.st-in .sub{margin:8px 0 6px}.st-in p{font-size:14px;margin-bottom:10px}.st-in .row{grid-template-columns:repeat(3,1fr)}.st-in small{display:none}.st-age{margin-bottom:6px}#dtext{font-size:16px}#cap{font-size:26px}}
+#hdate{max-width:34vw}
+body.rm *{animation-duration:0s!important;transition:none!important}
+</style>
+<div id="wrap">
+  <div id="stage" tabindex="-1" aria-label="Игра «Тихий час»">
+    <header id="hud">
+      <div class="hl">
+        <div class="hchip hcalm">ИНДЕКС <b id="hlvl">74</b><span id="hpips"></span></div>
+        <div class="hchip"><span id="hdate" class="hdate">—</span></div>
+      </div>
+      <div id="hep">—</div>
+    </header>
+    <div id="screen">
+      <canvas id="view" width="384" height="216" aria-hidden="true"></canvas>
+      <div id="crt"></div>
+      <div id="hot" aria-label="Нажмите, чтобы продолжить"></div>
+      <div id="cap" aria-live="polite"></div>
+      <div id="toast" hidden></div>
+    </div>
+    <section id="lower">
+      <div id="panel" hidden></div>
+      <div id="dlg" role="region" aria-label="Диалог">
+        <div class="dhead"><div class="dport" hidden><canvas id="dport" width="104" height="72"></canvas></div><div class="dtxt"><div id="dname"></div><div id="drole"></div></div></div>
+        <div id="dtext" aria-live="polite"></div>
+        <div id="choices" hidden></div>
+        <div id="dnext" hidden>▼</div>
+      </div>
+    </section>
+    <nav id="bar">
+      <button data-act="back" aria-label="Назад"><span class="ic">↶</span>Назад</button>
+      <button data-act="facts" aria-label="Что здесь правда"><span class="ic">✓</span>Правда</button>
+      <button data-act="archive" data-tab="ev" aria-label="Архив"><span class="ic">▤</span>Архив<span class="n" id="evn">0</span></button>
+      <button data-act="sound" id="bsound" aria-pressed="false"><span class="ic">♪</span><span id="bsoundt">Звук</span></button>
+      <button data-act="menu" aria-label="Меню"><span class="ic">≡</span>Меню</button>
+    </nav>
+    <div id="start">
+      <div class="st-in">
+        <div class="st-age">18+</div>
+        <h1>ТИХИЙ ЧАС</h1>
+        <div class="sub">закон, после которого законы не нужны</div>
+        <p>Вы — депутат Пушнин, карточка № 212. Ночью сгорел архив, утром на столе конверт без автора. Ваш голос посчитают. Только не так, как вы нажмёте.</p>
+        <div class="row"><button id="bcont" hidden>Продолжить</button><button id="bstartS">Начать со звуком</button><button id="bstart" class="alt">Без звука</button></div>
+        <small>Тап по экрану или тексту — дальше<br>Тёмная сатира · 20–30 минут<br>Страна, закон и персонажи вымышлены</small>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <div class="mbox" id="mbox" tabindex="-1">
+    <div class="mhead"><h2 id="mtitle"></h2><button id="mclose">Закрыть</button></div>
+    <div id="mtabs" hidden></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+/* ================= ПИКСЕЛЬНЫЙ ДВИЖОК ================= */
+const W = 384, H = 216;
+const BAYER = [0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v => (v + .5) / 16);
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return [c, x]; }
+const hex = h => { h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; };
+function R(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function P(c, x, y, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); }
+function hrow(c, y, x0, x1, col) { x0 = Math.round(x0); x1 = Math.round(x1); if (x1 < x0) return; c.fillStyle = col; c.fillRect(x0, Math.round(y), x1 - x0 + 1, 1); }
+function trap(c, y0, y1, l0, r0, l1, r1, col) { for (let y = y0; y <= y1; y++) { const t = (y - y0) / ((y1 - y0) || 1); hrow(c, y, l0 + (l1 - l0) * t, r0 + (r1 - r0) * t, typeof col === 'function' ? col(t, y) : col); } }
+function vtrap(c, x0, x1, t0, b0, t1, b1, col) { for (let x = x0; x <= x1; x++) { const k = (x - x0) / ((x1 - x0) || 1); const t = Math.round(t0 + (t1 - t0) * k), b = Math.round(b0 + (b1 - b0) * k); c.fillStyle = typeof col === 'function' ? col(k, x) : col; c.fillRect(x, t, 1, b - t + 1); } }
+function ell(c, cx, cy, rx, ry, col, half) { for (let y = -ry; y <= ry; y++) { if (half === 'bottom' && y < 0) continue; if (half === 'top' && y > 0) continue; const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); hrow(c, cy + y, cx - w, cx + w, col); } }
+function line(c, x0, y0, x1, y1, col) { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy; c.fillStyle = col; for (let i = 0; i < 3000; i++) { c.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } }
+function dith(c, x, y, w, h, col, ph = 0) { c.fillStyle = col; for (let j = 0; j < h; j++) for (let i = (j + ph) & 1; i < w; i += 2) c.fillRect(x + i, y + j, 1, 1); }
+function frame(c, x, y, w, h, col, t = 1) { R(c, x, y, w, t, col); R(c, x, y + h - t, w, t, col); R(c, x, y, t, h, col); R(c, x + w - t, y, t, h, col); }
+function grad(c, x, y, w, h, cols, horiz) {
+  const img = c.getImageData(x, y, w, h), d = img.data, rgb = cols.map(hex), n = rgb.length - 1;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const t = (horiz ? i / ((w - 1) || 1) : j / ((h - 1) || 1)) * n; let b = Math.floor(t), f = t - b; if (b >= n) { b = n - 1; f = 1; }
+    const th = BAYER[(((j + y) & 3) * 4) + ((i + x) & 3)]; const col = rgb[f > th ? b + 1 : b]; const k = (j * w + i) * 4;
+    d[k] = col[0]; d[k+1] = col[1]; d[k+2] = col[2]; d[k+3] = 255;
+  }
+  c.putImageData(img, x, y);
+}
+function glow(c, cx, cy, r, col, k = .6) { c.fillStyle = col; for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { const d = Math.sqrt(x * x + y * y) / r; if (d >= 1) continue; const px = Math.round(cx + x), py = Math.round(cy + y); if (BAYER[((py & 3) * 4) + (px & 3)] < (1 - d) * k) c.fillRect(px, py, 1, 1); } }
+function dtrap(c, y0, y1, l0, r0, l1, r1, col, k = .5) { c.fillStyle = col; for (let y = y0; y <= y1; y++) { const t = (y - y0) / ((y1 - y0) || 1); const a = Math.round(l0 + (l1 - l0) * t), b = Math.round(r0 + (r1 - r0) * t); for (let x = a; x <= b; x++) if (BAYER[((y & 3) * 4) + (x & 3)] < k) c.fillRect(x, y, 1, 1); } }
+function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 10000) / 10000; }; }
+
+/* пиксельный шрифт: цифры 3x5, буквы 5x7 */
+const DIG = { '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],'2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],'5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],'8':['111','101','111','101','111'],'9':['111','101','111','001','111'],':':['000','010','000','010','000'],' ':['000','000','000','000','000'] };
+function pnum(c, str, x, y, s, col) { str = String(str); for (const ch of str) { const g = DIG[ch] || DIG[' ']; g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') R(c, x + i * s, y + j * s, s, s, col); })); x += 4 * s; } }
+const GL = { 'З':['01110','10001','00001','00110','00001','10001','01110'], 'А':['00100','01010','10001','10001','11111','10001','10001'], 'К':['10001','10010','10100','11000','10100','10010','10001'], 'О':['01110','10001','10001','10001','10001','10001','01110'], 'Н':['10001','10001','10001','11111','10001','10001','10001'], '§':['01110','10000','01110','10001','01110','00001','01110'] };
+function glyph(c, ch, x, y, s, col, shade) { const g = GL[ch]; if (!g) return; g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') { if (shade) R(c, x + i * s + Math.max(1, s / 4), y + j * s + Math.max(1, s / 4), s, s, shade); } })); g.forEach((r, j) => [...r].forEach((b, i) => { if (b === '1') R(c, x + i * s, y + j * s, s, s, col); })); }
+
+function clock(c, cx, cy, r, h, m, sec, rim = '#d9b45a') {
+  ell(c, cx, cy, r + 1, r + 1, '#140f1c'); ell(c, cx, cy, r, r, rim); ell(c, cx, cy, r - 2, r - 2, '#f4ead2');
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; P(c, cx + Math.sin(a) * (r - 3), cy - Math.cos(a) * (r - 3), '#5a4a3a'); }
+  const ah = ((h % 12) + m / 60) / 12 * Math.PI * 2, am = m / 60 * Math.PI * 2;
+  line(c, cx, cy, cx + Math.sin(ah) * (r * .45), cy - Math.cos(ah) * (r * .45), '#140f1c');
+  line(c, cx, cy, cx + Math.sin(am) * (r * .75), cy - Math.cos(am) * (r * .75), '#140f1c');
+  if (sec != null) { const as = sec / 60 * Math.PI * 2; line(c, cx, cy, cx + Math.sin(as) * (r * .8), cy - Math.cos(as) * (r * .8), '#c8343c'); }
+  P(c, cx, cy, '#c8343c');
+}
+
+/* ================= СПРАЙТЫ КОТОВ ================= */
+const CAT_L = ["...FF......","..FPF......","..FPPF.....","..FPPFFFFFF",".FFFFFFFFFF",".FFFFFFFFFF","FFFFFFFFFFF","FFFFWEEFFFF","FFFFEKEFFFF","FFFFEKEFFFF","FFFFFFFFFLP","DFFFFFFLLOL",".DFFFFFLLLL","..DDFFFFFFF","....SSSSSTR","...SSSSSSTR","..SSSSSSSSR",".sSSSSSSSSR",".sSSSSSSSSR",".sSSSSSSSSS",".sSSSSSSSSS","FFsSSSSSSSS","FF.SSSSSSSS","...SSSSSSSS","....SSSSSS.","....SSSSSS.","....sSSSSs.","...BBBBBBB."];
+const CAT = CAT_L.map(l => l + [...l].reverse().join(''));
+const GW = 32, GH = 31, OX = 4, OY = 1;
+const TAIL1 = [[24,25],[26,24],[27,22],[28,20],[28,18],[28,16],[28,14],[27,12],[26,11]];
+const TAIL2 = [[24,25],[26,24],[27,22],[28,20],[28,18],[29,16],[29,14],[29,12],[28,11]];
+const PAL0 = { L:'#e8e0d0', O:'#140f1c', K:'#140f1c', W:'#ffffff', P:'#e59aa8', B:'#1e1a26', N:'#f4ecd8', G:'#d9b45a', Y:'#c8343c', X:'#d9b45a', M:'#5a4a3a', H:'#333344', V:'#111118', Q:'#6b4a2a', E:'#f2d14b' };
+const FEAT = {
+  glasses(put) { for (const ex of [8, 19]) { for (let x = ex - 1; x <= ex + 3; x++) { put(x, 7, 'G'); put(x, 11, 'G'); } for (let y = 7; y <= 11; y++) { put(ex - 1, y, 'G'); put(ex + 3, y, 'G'); } } for (let x = 12; x <= 17; x++) put(x, 8, 'G'); },
+  lanyard(put) { line2(put, 12, 15, 10, 19, 'Y'); line2(put, 19, 15, 13, 19, 'Y'); for (let y = 19; y <= 23; y++) for (let x = 8; x <= 12; x++) put(x, y, 'N'); for (let x = 8; x <= 12; x++) put(x, 19, 'Y'); put(9, 21, 'K'); put(10, 21, 'K'); put(11, 22, 'K'); },
+  pin(put) { put(9, 17, 'X'); put(10, 17, 'X'); put(9, 18, 'Y'); },
+  press(put) { for (let y = 18; y <= 21; y++) for (let x = 7; x <= 11; x++) put(x, y, 'N'); put(8, 19, 'K'); put(9, 19, 'K'); put(8, 20, 'K'); put(10, 20, 'Y'); },
+  cap(put) { for (let y = 1; y <= 5; y++) for (let x = 6; x <= 25; x++) put(x, y, y === 5 ? 'V' : 'H'); for (let x = 4; x <= 16; x++) put(x, 6, 'V'); put(15, 3, 'X'); put(16, 3, 'X'); },
+  briefcase(put) { for (let y = 21; y <= 27; y++) for (let x = 25; x <= 31; x++) put(x, y, 'Q'); for (let x = 25; x <= 31; x++) put(x, 27, 'O'); put(27, 20, 'K'); put(28, 19, 'K'); put(29, 20, 'K'); put(28, 23, 'X'); put(24, 22, 'F'); put(24, 23, 'F'); },
+  papers(put) { for (let y = 19; y <= 25; y++) for (let x = 0; x <= 6; x++) put(x, y, 'N'); for (const y of [21, 23]) for (let x = 1; x <= 5; x++) put(x, y, 'O'); paw(put); },
+  book(put) { for (let y = 19; y <= 25; y++) for (let x = 0; x <= 6; x++) put(x, y, 'X'); for (let y = 19; y <= 25; y++) put(0, y, 'N'); put(3, 21, 'G'); put(4, 21, 'G'); paw(put); },
+  notebook(put) { for (let y = 20; y <= 25; y++) for (let x = 1; x <= 6; x++) put(x, y, 'N'); for (const y of [22, 24]) for (let x = 2; x <= 5; x++) put(x, y, 'O'); for (let x = 1; x <= 6; x++) put(x, 20, 'Y'); paw(put); },
+  strings(put) { put(13, 15, 'N'); put(13, 16, 'N'); put(13, 17, 'N'); put(16, 15, 'N'); put(16, 16, 'N'); put(16, 17, 'N'); for (let x = 9; x <= 20; x++) put(x, 15, 's'); },
+  tabby(put) { [[12,5],[13,5],[16,5],[17,5],[14,6],[15,6],[14,5],[15,7],[4,10],[5,10],[4,12],[25,10],[24,10],[25,12],[7,6],[22,6]].forEach(([x, y]) => put(x, y, 'M')); },
+  ruff(put) { [[3,11],[3,12],[2,12],[3,13],[26,11],[26,12],[27,12],[26,13]].forEach(([x, y]) => put(x, y, 'F')); for (let y = 15; y <= 17; y++) for (let x = 11 + (y - 15); x <= 18 - (y - 15); x++) put(x, y, 'L'); },
+  scar(put) { put(7, 1, '.'); put(7, 2, 'F'); put(22, 6, 'Y'); put(21, 7, 'Y'); },
+  tux(put) { for (let y = 7; y <= 10; y++) { put(14, y, 'L'); put(15, y, 'L'); } for (let y = 11; y <= 13; y++) for (let x = 9; x <= 20; x++) put(x, y, 'L'); },
+  mask(put) { for (let y = 10; y <= 13; y++) for (let x = 10; x <= 19; x++) put(x, y, 'M'); put(13, 11, 'P'); put(14, 11, 'P'); put(15, 11, 'P'); put(16, 11, 'P'); [[4,22],[5,22],[4,23],[5,23],[24,22],[25,22],[24,23],[25,23]].forEach(([x, y]) => put(x, y, 'M')); },
+  belt(put) { for (let x = 7; x <= 22; x++) put(x, 22, 'K'); put(14, 22, 'X'); put(15, 22, 'X'); },
+  camera(put) { for (let y = 19; y <= 24; y++) for (let x = 0; x <= 7; x++) put(x, y, 'H'); for (let y = 20; y <= 23; y++) for (let x = 2; x <= 5; x++) put(x, y, 'V'); put(3, 21, 'W'); put(6, 19, 'X'); paw(put); }
+};
+function paw(put) { put(4, 22, 'F'); put(5, 22, 'F'); put(4, 23, 'F'); put(5, 23, 'F'); }
+function line2(put, x0, y0, x1, y1, ch) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let i = 0; i <= n; i++) put(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), ch); }
+function buildGrid(o, fr) {
+  const G = []; for (let j = 0; j < GH; j++) G.push(Array(GW).fill('.'));
+  const put = (x, y, ch) => { if (y >= 0 && y < GH && x >= 0 && x < GW) G[y][x] = ch; };
+  const tail = fr.tail2 ? TAIL2 : TAIL1;
+  for (let i = 0; i < tail.length - 1; i++) { const [a, b] = tail[i], [c2, d] = tail[i + 1]; const ch = i >= tail.length - 3 ? 'D' : 'F'; line2(put, a, b, c2, d, ch); line2((x, y, h) => put(x - 1, y, h), a, b, c2, d, ch); }
+  CAT.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') put(OX + i, OY + j, ch); }));
+  (o.feat || []).forEach(f => FEAT[f] && FEAT[f](put));
+  if (fr.blink) { for (const ex of [8, 19]) { for (let x = ex; x <= ex + 2; x++) { put(x, 8, 'F'); put(x, 9, 'O'); put(x, 10, 'F'); } } }
+  if (fr.talk) { for (let x = 13; x <= 16; x++) put(x, 12, 'O'); put(14, 13, 'P'); put(15, 13, 'P'); put(13, 13, 'O'); put(16, 13, 'O'); }
+  return G;
+}
+function renderGrid(G, pal, outline = '#140f1c') {
+  const [cv, c] = mk(GW + 2, GH + 2);
+  c.fillStyle = outline;
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) if (G[j][i] !== '.') { c.fillRect(i, j + 1, 3, 1); c.fillRect(i + 1, j, 1, 3); }
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const ch = G[j][i]; if (ch === '.') continue; c.fillStyle = pal[ch] || PAL0[ch] || '#ff00ff'; c.fillRect(i + 1, j + 1, 1, 1); }
+  return cv;
+}
+const SPR = {};
+function sprite(id, fr) {
+  const key = id + (fr.blink ? 'b' : '') + (fr.talk ? 't' : '') + (fr.tail2 ? '2' : '');
+  if (SPR[key]) return SPR[key];
+  const o = CH[id]; const pal = Object.assign({}, PAL0, o.pal);
+  if (!pal.D) pal.D = pal.F; if (!pal.s) pal.s = pal.S;
+  return SPR[key] = renderGrid(buildGrid(o, fr), pal);
+}
+function portrait(id) {
+  const spr = sprite(id, {}); const [cv, c] = mk(104, 72);
+  const col = CH[id].bg || '#2a2342'; R(c, 0, 0, 104, 72, col); dith(c, 0, 48, 104, 24, 'rgba(0,0,0,.25)');
+  c.drawImage(spr, 3, 0, 26, 18, 0, 0, 104, 72); return cv;
+}
+const hash = s => { let h = 7; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+function drawActor(c, a, t, speaking) {
+  const hh = hash(a.c); const s = a.s || 2;
+  const blink = ((t + hh * 37) % 3900) < 130; const talk = speaking && Math.floor(t / 110) % 2 === 0; const tail2 = Math.floor(t / 650 + hh) % 2 === 0;
+  const bob = (Math.floor(t / 520 + hh) % 2) ? 1 : 0;
+  const spr = sprite(a.c, { blink, talk, tail2 });
+  // тень
+  ell(c, a.x + 15 * s + s, a.y + (GH) * s - 1, 10 * s, 2, 'rgba(10,6,20,.35)');
+  c.drawImage(spr, 0, 0, GW + 2, GH + 2, a.x, a.y - bob, (GW + 2) * s, (GH + 2) * s);
+}
+const MINI = ["F.....F","FF...FF","FFFFFFF","FEFFFEF","FFFPFFF",".FFFFF."];
+function mini(c, x, y, fur, seat) {
+  if (seat) R(c, x - 1, y + 2, 9, 7, seat);
+  c.fillStyle = '#140f1c'; MINI.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') { c.fillRect(x + i - 1, y + j, 3, 1); c.fillRect(x + i, y + j - 1, 1, 3); } }));
+  MINI.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '.') return; c.fillStyle = ch === 'E' ? '#f2d14b' : ch === 'P' ? '#e59aa8' : fur; c.fillRect(x + i, y + j, 1, 1); }));
+}
+const FURS = ['#e58a3a','#8d93a6','#26232e','#efe0c4','#9a9286','#c98a4b','#f6f3ee','#6f7f99','#d8c27a','#5a5248','#b85c2a','#a7a9b3'];
+
+/* ================= ФОНЫ (статические слои) ================= */
+const BG = {};
+function windowsGrid(c, x0, y0, cols, rows, w, h, gx, gy, seed, litK, lit = '#ffcf6b', dark = '#2c3558', frameCol = '#5b5448') {
+  const r = rng(seed);
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const x = x0 + i * gx, y = y0 + j * gy; R(c, x - 1, y - 1, w + 2, h + 2, frameCol); R(c, x, y, w, h, r() < litK ? lit : dark); R(c, x + (w >> 1), y, 1, h, frameCol); R(c, x, y + (h >> 1), w, 1, frameCol); }
+}
+function tree(c, x, y, seed, cols) { const r = rng(seed); R(c, x - 2, y - 30, 5, 34, '#4e2d1a'); R(c, x - 2, y - 30, 1, 34, '#6b4a2a'); for (let i = 0; i < 9; i++) ell(c, x + (r() - .5) * 26, y - 40 - r() * 26, 7 + r() * 6, 6 + r() * 5, cols[i % cols.length]); for (let i = 0; i < 30; i++) P(c, x + (r() - .5) * 34, y - 30 - r() * 40, cols[(i + 1) % cols.length]); }
+BG.street = function (c, ev) {
+  grad(c, 0, 0, W, 120, ev ? ['#120f2a','#2a2550','#5a3260','#b9585a'] : ['#3b4f8f','#6f86c4','#e8a87c','#f6c98b']);
+  const r = rng(11); for (let i = 0; i < 9; i++) { const bx = i * 46 - 10, bh = 30 + r() * 40; R(c, bx, 120 - bh, 44, bh, ev ? '#1d1a36' : '#7a85a8'); windowsGrid(c, bx + 4, 124 - bh, 5, Math.floor(bh / 12), 3, 4, 8, 10, i, ev ? .5 : .1, ev ? '#ffcf6b' : '#c9d3ec', ev ? '#141230' : '#5f6a8c', ev ? '#1d1a36' : '#7a85a8'); }
+  if (ev) for (let i = 0; i < 40; i++) P(c, r() * W, r() * 40, '#f4ead2');
+  // здание
+  R(c, 36, 44, 312, 10, '#7f776b'); R(c, 36, 52, 312, 2, '#5f584d'); R(c, 40, 54, 304, 118, ev ? '#7c7568' : '#9c9487');
+  for (let x = 48; x < 340; x += 20) { R(c, x, 56, 4, 112, ev ? '#6a6458' : '#8a8276'); R(c, x, 56, 1, 112, ev ? '#8a8476' : '#b0a899'); }
+  for (let col = 0; col < 15; col++) { const x = 54 + col * 20; if (x > 150 && x < 226) continue; for (let row = 0; row < 4; row++) { const y = 62 + row * 26; const lit = rng(col * 13 + row)() < (ev ? .7 : .25); R(c, x - 1, y - 1, 12, 18, '#5b5448'); R(c, x, y, 10, 16, lit ? '#ffcf6b' : '#2c3558'); R(c, x + 5, y, 1, 16, '#5b5448'); R(c, x, y + 7, 10, 1, '#5b5448'); if (!lit) P(c, x + 1, y + 1, '#55608a'); } }
+  R(c, 156, 92, 72, 80, '#5f584d'); R(c, 152, 88, 80, 6, '#7f776b');
+  R(c, 162, 98, 60, 9, '#d9b45a'); R(c, 163, 99, 58, 7, '#b88a2e'); for (let x = 166; x < 218; x += 5) R(c, x, 101, 3, 3, '#f2d48a');
+  R(c, 168, 120, 48, 52, '#4e2d1a'); for (let x = 170; x < 214; x += 12) { R(c, x, 124, 10, 44, '#5e3820'); frame(c, x, 124, 10, 44, '#3a2010'); }
+  R(c, 191, 140, 2, 6, '#f2c14e'); R(c, 195, 140, 2, 6, '#f2c14e');
+  for (const x of [160, 176, 202, 218]) { R(c, x, 108, 7, 64, '#c9c1b2'); R(c, x + 5, 108, 2, 64, '#a39b8d'); R(c, x - 1, 106, 9, 3, '#e0d9cc'); }
+  R(c, 191, 16, 2, 30, '#d8d8e0');
+  for (let i = 0; i < 4; i++) R(c, 140 - i * 8, 172 + i * 2, 104 + i * 16, 2, i % 2 ? '#a7a29a' : '#c4beb4');
+  // улица
+  R(c, 0, 172, W, 44, ev ? '#4a4752' : '#7d7a80');
+  for (let y = 180; y < 216; y += 10) R(c, 0, y, W, 1, ev ? '#3e3b46' : '#6c6970');
+  for (let x = 0; x < W; x += 16) for (let y = 172; y < 216; y += 10) R(c, x + ((y / 10) % 2) * 8, y, 1, 10, ev ? '#3e3b46' : '#6c6970');
+  R(c, 0, 172, W, 2, '#3a3842');
+  tree(c, 14, 176, 3, ev ? ['#6b4a2a','#8a5a2a','#a8692a'] : ['#e8a33a','#d9762b','#c8343c','#f2c14e']);
+  tree(c, 368, 178, 5, ev ? ['#6b4a2a','#8a5a2a','#a8692a'] : ['#f2c14e','#e8a33a','#d9762b','#b85c2a']);
+  for (const x of [118, 264]) { R(c, x, 118, 3, 56, '#2a2a33'); R(c, x - 4, 114, 11, 5, '#2a2a33'); R(c, x - 3, 118, 9, 2, ev ? '#ffe7a8' : '#8d8a7e'); if (ev) glow(c, x + 1, 122, 14, '#ffd88a', .45); }
+};
+BG.checkpoint = function (c) {
+  grad(c, 0, 0, W, 122, ['#e3d7b8','#cdbd93']);
+  R(c, 0, 118, W, 4, '#4e2d1a'); R(c, 0, 122, W, 40, '#7a4a2a'); for (let x = 0; x < W; x += 24) { frame(c, x + 2, 126, 20, 32, '#5e3820'); }
+  grad(c, 0, 162, W, 54, ['#8e8a85','#6f6b66']); for (let k = 0; k < 6; k++) { const y = 162 + Math.round(Math.pow(k / 6, 1.6) * 54); R(c, 0, y, W, 1, '#5f5b56'); }
+  for (let i = -8; i <= 8; i++) line(c, 192 + i * 20, 162, 192 + i * 60, 216, '#67635e');
+  frame(c, 40, 30, 54, 30, '#d9b45a', 2); R(c, 42, 32, 50, 26, '#33468a'); R(c, 44, 34, 46, 8, '#f4f4f4'); R(c, 44, 42, 46, 7, '#2f56b0'); R(c, 44, 49, 46, 7, '#c8343c');
+  R(c, 140, 22, 80, 14, '#26305a'); frame(c, 140, 22, 80, 14, '#d9b45a'); for (let i = 0; i < 6; i++) R(c, 150 + i * 10, 28, 6, 2, '#f4ead2');
+  R(c, 148, 62, 62, 10, '#9aa3b5'); R(c, 148, 62, 8, 104, '#9aa3b5'); R(c, 202, 62, 8, 104, '#9aa3b5'); R(c, 154, 70, 2, 96, '#6b7488'); R(c, 202, 70, 2, 96, '#6b7488'); R(c, 148, 62, 62, 2, '#c6cdda');
+  for (const x of [228, 262]) { R(c, x, 128, 10, 36, '#b8c0cc'); R(c, x, 128, 10, 3, '#6b7488'); R(c, x + 10, 140, 18, 3, '#d0d6de'); R(c, x + 2, 150, 6, 4, '#2f6b4f'); }
+  R(c, 296, 54, 88, 116, '#5b6b7a'); R(c, 300, 58, 84, 6, '#3f4b58');
+};
+BG.checkpointFg = function (c) {
+  c.globalAlpha = .38; R(c, 304, 66, 78, 52, '#8fb3c9'); c.globalAlpha = 1;
+  for (let i = 0; i < 4; i++) line(c, 310 + i * 14, 112, 330 + i * 14, 70, 'rgba(255,255,255,.35)');
+  frame(c, 302, 64, 82, 56, '#3f4b58', 2); R(c, 294, 120, 90, 10, '#4e2d1a'); R(c, 294, 120, 90, 2, '#7a4a2a'); R(c, 296, 130, 88, 40, '#3f4b58');
+  R(c, 318, 124, 20, 4, '#f4ecd8');
+};
+BG.lobby = function (c) {
+  grad(c, 0, 0, W, 152, ['#efe2c4','#dccaa0','#c8b07e']);
+  R(c, 0, 0, W, 6, '#b88a2e'); R(c, 0, 6, W, 2, '#8a6420');
+  R(c, 150, 24, 84, 128, '#6b4b2a'); ell(c, 192, 30, 42, 14, '#6b4b2a', 'top'); grad(c, 156, 34, 72, 118, ['#3a2a1a','#1b1426']); ell(c, 192, 36, 36, 10, '#3a2a1a', 'top'); frame(c, 150, 24, 84, 128, '#d9b45a', 2);
+  for (let y = 60; y < 150; y += 22) R(c, 160, y, 64, 1, '#4e3a28');
+  for (const x of [34, 112, 254, 332]) { R(c, x, 14, 20, 138, '#f2e9d6'); R(c, x + 15, 14, 5, 138, '#cbbd9e'); R(c, x + 2, 14, 2, 138, '#fffaf0'); R(c, x - 3, 10, 26, 7, '#d9b45a'); R(c, x - 3, 146, 26, 7, '#bfae8a'); for (let y = 24; y < 140; y += 10) R(c, x + 8, y, 1, 6, '#ddd2bb'); }
+  const painting = (x, y, w, h, seed) => { R(c, x - 4, y - 4, w + 8, h + 8, '#c99a3a'); frame(c, x - 4, y - 4, w + 8, h + 8, '#8a6420'); frame(c, x - 2, y - 2, w + 4, h + 4, '#f2d48a'); grad(c, x, y, w, Math.round(h * .55), ['#7fa3c8','#e8c58a']); grad(c, x, y + Math.round(h * .55), w, h - Math.round(h * .55), ['#5a7a3a','#3a5a2a']); const r = rng(seed); for (let i = 0; i < 6; i++) ell(c, x + r() * w, y + h * .55, 3 + r() * 4, 3, '#2f4a24', 'top'); R(c, x + w * .5, y + h * .5, 2, 6, '#6b4b2a'); ell(c, x + w * .5 + 1, y + h * .48, 5, 4, '#7a1e2e'); };
+  painting(64, 40, 36, 50, 3); painting(284, 40, 36, 50, 9);
+  // пол
+  for (let k = 0; k < 9; k++) { const y0 = 152 + Math.round(Math.pow(k / 9, 1.5) * 64), y1 = 152 + Math.round(Math.pow((k + 1) / 9, 1.5) * 64); const tw = 10 + k * 5; for (let x = -tw; x < W + tw; x += tw) R(c, x + (k % 2) * (tw >> 1), y0, tw >> 1, y1 - y0, ((x / tw) | 0) % 2 ? '#d8d2c6' : '#b8b0a2'); R(c, 0, y0, W, 1, '#a39b8d'); }
+  trap(c, 152, 216, 174, 210, 120, 264, '#9b2335'); trap(c, 152, 216, 172, 173, 116, 119, '#d9b45a'); trap(c, 152, 216, 211, 212, 265, 268, '#d9b45a');
+  line(c, 192, 0, 192, 10, '#8a6420'); ell(c, 192, 16, 22, 6, '#d9b45a'); ell(c, 192, 18, 16, 4, '#b88a2e'); for (let i = -3; i <= 3; i++) { R(c, 192 + i * 6, 8, 1, 4, '#f4ead2'); P(c, 192 + i * 6, 7, '#ffe08a'); }
+  R(c, 6, 150, 24, 30, '#33468a'); frame(c, 6, 150, 24, 30, '#d9b45a'); for (let y = 156; y < 176; y += 4) R(c, 10, y, 16, 2, '#c9d3ec');
+};
+BG.office = function (c) {
+  grad(c, 0, 0, W, 170, ['#1b2140','#232b52','#2b3460']);
+  R(c, 0, 170, W, 46, '#141a33'); for (let x = 0; x < W; x += 20) R(c, x, 170, 1, 46, '#1b2140');
+  R(c, 256, 22, 100, 92, '#4e2d1a'); grad(c, 260, 26, 92, 84, ['#0b0f26','#1b2350','#2b3a6e']);
+  ell(c, 336, 40, 6, 6, '#f4ead2'); ell(c, 338, 38, 5, 5, '#1b2350');
+  const r = rng(4); for (let i = 0; i < 8; i++) { const bh = 14 + r() * 34, bx = 260 + i * 12; R(c, bx, 110 - bh, 11, bh, '#121634'); for (let y = 112 - bh; y < 108; y += 5) for (let x = bx + 2; x < bx + 10; x += 4) if (r() < .45) R(c, x, y, 2, 2, '#ffcf6b'); }
+  R(c, 304, 26, 2, 84, '#4e2d1a'); R(c, 260, 66, 92, 2, '#4e2d1a');
+  R(c, 14, 24, 76, 136, '#4e2d1a'); for (let s = 0; s < 5; s++) { const y = 30 + s * 26; R(c, 18, y + 20, 68, 4, '#3a2010'); let x = 20; const rr = rng(s + 20); while (x < 82) { const w = 3 + Math.floor(rr() * 4), h = 12 + Math.floor(rr() * 8); R(c, x, y + 20 - h, w, h, ['#7a1e2e','#2f6b4f','#33468a','#c99a3a','#5d6788'][Math.floor(rr() * 5)]); R(c, x, y + 20 - h + 2, w, 1, '#d9b45a'); x += w + 1; } }
+  frame(c, 120, 30, 50, 34, '#c99a3a', 2); grad(c, 122, 32, 46, 30, ['#33468a','#7fa3c8']);
+};
+BG.officeFg = function (c, t) {
+  R(c, 60, 148, 210, 8, '#7a4a2a'); R(c, 60, 148, 210, 2, '#a8693a'); R(c, 66, 156, 198, 60, '#4e2d1a'); for (let x = 72; x < 260; x += 46) frame(c, x, 162, 38, 40, '#3a2010');
+  R(c, 96, 132, 2, 16, '#2a2a33'); trap(c, 124, 132, 92, 102, 88, 106, '#2f6b4f'); R(c, 90, 146, 14, 3, '#2a2a33'); dtrap(c, 133, 148, 90, 104, 70, 126, '#ffb347', .35);
+  R(c, 190, 132, 34, 14, '#2a2a33'); R(c, 192, 134, 30, 10, '#9fd3ff'); for (let y = 136; y < 143; y += 2) R(c, 194, y, 18 + (y % 4), 1, '#5fa3d8'); R(c, 186, 146, 42, 3, '#3a3a44');
+  for (let i = 0; i < 4; i++) { R(c, 140 + i, 140 - i * 2, 26, 8, '#f4ecd8'); R(c, 140 + i, 140 - i * 2, 26, 1, '#cfc4a8'); }
+  for (let y = 135; y < 145; y += 2) R(c, 146, y, 14, 1, '#9a917e');
+};
+function corridor(c, opt = {}) {
+  const vx = 192, vy = 100, bl = 172, br = 212, bt = 76, bb = 124;
+  trap(c, 0, bt, 0, W - 1, bl, br, (t) => t < .35 ? '#d9cfb4' : t < .7 ? '#c7bb9c' : '#b2a685');
+  for (const k of [.18, .45, .7]) { const y = Math.round(bt * k), l = bl * k, r = W - 1 - (W - 1 - br) * k; ell(c, Math.round((l + r) / 2), y + 2, Math.round((r - l) * .06) + 2, 2, '#fff1c4'); glow(c, Math.round((l + r) / 2), y + 4, 10 + Math.round(16 * (1 - k)), '#fff1c4', .35); }
+  trap(c, bb, 216, bl, br, -80, 464, (t) => t < .3 ? '#5a4232' : t < .65 ? '#6b5040' : '#7a5c48');
+  for (let i = -10; i <= 10; i++) line(c, vx + i * 3, bb, vx + i * 60, 216, '#4e3828');
+  for (let k = 0; k < 7; k++) { const y = bb + Math.round(Math.pow(k / 7, 2) * (216 - bb)); R(c, 0, y, W, 1, '#4e3828'); }
+  trap(c, bb, 216, 188, 196, 130, 254, '#8e1f2f'); trap(c, bb, 216, 187, 187, 127, 129, '#d9b45a'); trap(c, bb, 216, 197, 197, 255, 257, '#d9b45a');
+  const wall = (k, x) => { return null; };
+  vtrap(c, 0, bl - 1, 0, 216, bt, bb, (k) => k < .4 ? '#e6dcc0' : k < .75 ? '#d4c8a8' : '#beb190');
+  vtrap(c, br + 1, W - 1, bt, bb, 0, 216, (k) => k > .6 ? '#e6dcc0' : k > .25 ? '#d4c8a8' : '#beb190');
+  for (let x = 0; x < bl; x++) { const k = x / bl; const top = Math.round(bt * k), bot = Math.round(216 + (bb - 216) * k); const wl = Math.round(top + (bot - top) * .58); R(c, x, wl, 1, bot - wl, k < .4 ? '#7a4a2a' : k < .75 ? '#6b4026' : '#5a3520'); if (x % 2 === 0) P(c, x, wl, '#a8693a'); }
+  for (let x = br + 1; x < W; x++) { const k = (W - 1 - x) / (W - 1 - br); const top = Math.round(bt * k), bot = Math.round(216 + (bb - 216) * k); const wl = Math.round(top + (bot - top) * .58); R(c, x, wl, 1, bot - wl, k < .4 ? '#7a4a2a' : k < .75 ? '#6b4026' : '#5a3520'); if (x % 2 === 0) P(c, x, wl, '#a8693a'); }
+  const door = (side, k0, k1) => { for (let x0 = 0; x0 < 2; x0++) {} const xs = side < 0 ? [Math.round(bl * k0), Math.round(bl * k1)] : [Math.round(W - 1 - (W - 1 - br) * k0), Math.round(W - 1 - (W - 1 - br) * k1)]; const [xa, xb] = xs[0] < xs[1] ? xs : [xs[1], xs[0]]; for (let x = xa; x <= xb; x++) { const k = side < 0 ? x / bl : (W - 1 - x) / (W - 1 - br); const top = bt * k, bot = 216 + (bb - 216) * k; const dt = Math.round(top + (bot - top) * .2), db = Math.round(bot); const edge = x === xa || x === xb; R(c, x, dt, 1, db - dt, edge ? '#3a2010' : '#5e3820'); if (!edge && x === Math.round((xa + xb) / 2)) R(c, x, Math.round(dt + (db - dt) * .55), 1, 2, '#f2c14e'); } const xm = Math.round((xa + xb) / 2); const k = side < 0 ? xm / bl : (W - 1 - xm) / (W - 1 - br); const top = bt * k, bot = 216 + (bb - 216) * k; R(c, xm - 2, Math.round(top + (bot - top) * .12), 5, 2, '#d9b45a'); };
+  door(-1, .05, .2); door(-1, .42, .52); door(-1, .7, .76); door(1, .05, .2); door(1, .42, .52); door(1, .7, .76);
+  R(c, bl, bt, br - bl + 1, bb - bt + 1, '#b2a685'); R(c, 180, 84, 24, 40, '#4e2d1a'); R(c, 182, 86, 20, 38, opt.night ? '#2a1a10' : '#6b4026'); R(c, 191, 86, 2, 38, '#3a2010'); glow(c, 192, 104, 22, '#ffe7a8', .25);
+  if (opt.clock) { /* часы рисуются в dyn */ }
+}
+BG.corridor = function (c) { corridor(c); };
+BG.committee = function (c) {
+  grad(c, 0, 0, W, 132, ['#5d6788','#4e5876','#434b66']);
+  R(c, 0, 132, W, 84, '#3b3f52'); dith(c, 0, 132, W, 84, '#353849');
+  for (const x of [276, 330]) { R(c, x, 18, 46, 76, '#2a2f45'); R(c, x + 2, 20, 42, 72, '#cfe3f0'); for (let y = 22; y < 92; y += 4) R(c, x + 2, y, 42, 2, '#9fb6c8'); }
+  dtrap(c, 94, 132, 280, 370, 250, 384, '#cfe3f0', .18);
+  R(c, 26, 26, 96, 60, '#e9edf2'); frame(c, 26, 26, 96, 60, '#9aa3b5', 2); line(c, 34, 76, 54, 60, '#2f56b0'); line(c, 54, 60, 74, 66, '#2f56b0'); line(c, 74, 66, 96, 40, '#2f56b0'); line(c, 34, 78, 112, 78, '#5d6788'); for (let i = 0; i < 4; i++) R(c, 36 + i * 18, 34, 12, 3, '#c8343c');
+  R(c, 168, 10, 48, 30, '#2a2f45'); frame(c, 168, 10, 48, 30, '#d9b45a'); for (let y = 16; y < 36; y += 5) R(c, 174, y, 36, 2, '#9aa3b5');
+  for (const [x, w] of [[46, 26], [100, 26], [158, 26], [210, 26], [262, 26], [318, 26]]) { R(c, x, 96, w, 50, '#2f6b4f'); R(c, x + 2, 98, w - 4, 4, '#3f8a5a'); frame(c, x, 96, w, 50, '#1d4a35'); }
+};
+BG.committeeFg = function (c) {
+  ell(c, 192, 182, 172, 40, '#3a2010'); ell(c, 192, 178, 170, 38, '#7a4a2a'); ell(c, 192, 177, 162, 34, '#8a5530');
+  for (let i = 0; i < 6; i++) ell(c, 192, 178, 150 - i * 22, 30 - i * 5, i % 2 ? '#8a5530' : '#83502c');
+  const papers = [[70, 162], [130, 152], [196, 156], [258, 152], [310, 164], [160, 184], [240, 186]];
+  papers.forEach(([x, y], i) => { R(c, x, y, 22, 14, '#f4ecd8'); R(c, x, y + 13, 22, 1, '#cfc4a8'); for (let k = 0; k < 4; k++) R(c, x + 3, y + 3 + k * 3, 14 - (k * 3) % 7, 1, '#9a917e'); if (i === 2) { R(c, x + 2, y + 2, 4, 2, '#c8343c'); } });
+  for (const [x, y] of [[110, 166], [286, 168], [214, 176]]) { R(c, x, y, 5, 8, '#9fd3ff'); R(c, x, y, 5, 2, '#cfe9ff'); }
+  for (const [x, y] of [[176, 146], [92, 152], [290, 150]]) { trap(c, y, y + 6, x, x + 18, x - 2, x + 20, '#d9b45a'); R(c, x + 3, y + 2, 12, 1, '#7a5a1a'); }
+};
+function hallBase(c, opt = {}) {
+  grad(c, 0, 0, W, 112, ['#5a3a22','#4e2d1a','#3a2010']);
+  for (let x = 0; x < W; x += 32) { frame(c, x + 3, 6, 26, 60, '#6b4026'); R(c, x + 3, 70, 26, 36, '#43271a'); }
+  R(c, 110, 6, 164, 78, '#d9b45a'); R(c, 113, 9, 158, 72, '#f4f4f4'); R(c, 113, 33, 158, 24, '#2f56b0'); R(c, 113, 57, 158, 24, '#c8343c');
+  ell(c, 192, 44, 17, 19, '#8a6420'); ell(c, 192, 44, 15, 17, '#d9b45a'); ell(c, 192, 44, 9, 11, '#f2c14e'); ell(c, 192, 48, 5, 6, '#b88a2e'); R(c, 186, 30, 2, 6, '#f2d48a'); R(c, 197, 30, 2, 6, '#f2d48a');
+  for (const x of [16, 284]) { R(c, x, 14, 84, 54, '#5d6788'); R(c, x + 3, 17, 78, 48, '#0b1222'); }
+  R(c, 84, 84, 216, 30, '#6b3a22'); R(c, 84, 84, 216, 3, '#a8693a'); R(c, 84, 112, 216, 3, '#3a2010');
+  for (let x = 96; x < 290; x += 22) mini(c, x, 76, FURS[(x / 22 | 0) % FURS.length], '#7a1e2e');
+  R(c, 84, 84, 216, 3, '#a8693a'); for (let x = 88; x < 300; x += 20) R(c, x, 89, 12, 18, '#5a3520');
+  R(c, 174, 104, 36, 34, '#8a5530'); R(c, 174, 104, 36, 3, '#c98a4b'); R(c, 188, 116, 8, 8, '#d9b45a'); R(c, 192, 96, 1, 9, '#2a2a33'); R(c, 190, 95, 4, 2, '#2a2a33');
+  // ряды
+  grad(c, 0, 112, W, 104, ['#3a2a28','#2a1d1c']);
+  for (let i = 0; i < 6; i++) {
+    const rx = 70 + i * 40, ry = 26 + i * 15, cy = 112;
+    ell(c, 192, cy, rx, ry, '#5a3520', 'bottom'); ell(c, 192, cy - 4, rx - 2, ry - 4, i % 2 ? '#2e2120' : '#33241f', 'bottom');
+    for (let a = 0.12; a < Math.PI - 0.1; a += 0.42 - i * 0.04) { const x = 192 + Math.cos(a) * (rx - 8), y = cy + Math.sin(a) * (ry - 10) - 6; if (y < 116) continue; mini(c, Math.round(x - 3), Math.round(y), FURS[(i * 7 + Math.round(a * 10)) % FURS.length], '#9b2335'); }
+    const rr = rx, yy = ry; for (let x = -rr; x <= rr; x++) { const y = Math.round(cy + yy * Math.sqrt(Math.max(0, 1 - (x * x) / (rr * rr)))); if (y > 112) { P(c, 192 + x, y, '#a8693a'); P(c, 192 + x, y + 1, '#6b4026'); } }
+  }
+}
+BG.hall = function (c) { hallBase(c); };
+BG.hallFg = function (c) { R(c, 0, 158, W, 58, '#3a2010'); R(c, 0, 156, W, 4, '#a8693a'); R(c, 0, 160, W, 2, '#6b4026'); for (let x = 4; x < W; x += 12) { R(c, x, 162, 4, 54, '#6b4026'); R(c, x + 1, 162, 1, 54, '#8a5530'); } R(c, 0, 176, W, 3, '#a8693a'); };
+BG.board = function (c) {
+  hallBase(c); c.globalAlpha = .55; R(c, 0, 0, W, H, '#0b0812'); c.globalAlpha = 1;
+  R(c, 52, 14, 280, 150, '#5d6788'); R(c, 56, 18, 272, 142, '#070b16'); frame(c, 52, 14, 280, 150, '#9aa3b5');
+  for (let y = 20; y < 158; y += 3) R(c, 58, y, 268, 1, '#0b1222');
+};
+BG.council = function (c) {
+  grad(c, 0, 0, W, 120, ['#1a2f5a','#1f3b6e','#16294d']);
+  ell(c, 192, 0, 120, 46, '#2a4a86', 'bottom'); ell(c, 192, 0, 112, 40, '#1a2f5a', 'bottom'); for (let a = 0.2; a < Math.PI; a += 0.25) line(c, 192, 0, 192 + Math.cos(a) * 112, Math.sin(a) * 40, '#2a4a86');
+  for (const x of [22, 70, 300, 348]) { R(c, x, 20, 16, 100, '#e8ecf4'); R(c, x + 12, 20, 4, 100, '#b9c2d6'); R(c, x - 2, 16, 20, 5, '#d9b45a'); }
+  R(c, 120, 50, 144, 44, '#dfe6f0'); frame(c, 120, 50, 144, 44, '#d9b45a', 2); R(c, 124, 54, 136, 12, '#f4f4f4'); R(c, 124, 66, 136, 12, '#2f56b0'); R(c, 124, 78, 136, 12, '#c8343c');
+  grad(c, 0, 120, W, 96, ['#16294d','#0f1d38']);
+  for (let i = 0; i < 5; i++) { const rx = 80 + i * 42, ry = 24 + i * 15; ell(c, 192, 118, rx, ry, '#dfe6f0', 'bottom'); ell(c, 192, 115, rx - 2, ry - 4, '#16294d', 'bottom'); for (let a = 0.15; a < Math.PI - 0.1; a += 0.4 - i * 0.04) { const x = 192 + Math.cos(a) * (rx - 8), y = 118 + Math.sin(a) * (ry - 10) - 6; if (y < 122) continue; mini(c, Math.round(x - 3), Math.round(y), FURS[(i * 5 + Math.round(a * 9)) % FURS.length], '#2f56b0'); } }
+  ell(c, 192, 10, 64, 6, '#d9b45a'); ell(c, 192, 10, 58, 4, '#1f3b6e'); for (let a = 0; a < Math.PI * 2; a += .35) P(c, 192 + Math.cos(a) * 61, 10 + Math.sin(a) * 5, '#fff1c4');
+};
+BG.councilFg = function (c) { R(c, 152, 138, 80, 50, '#dfe6f0'); R(c, 152, 138, 80, 3, '#ffffff'); frame(c, 152, 138, 80, 50, '#9aa3b5'); R(c, 186, 148, 12, 10, '#d9b45a'); };
+BG.cabinet = function (c) {
+  R(c, 0, 0, W, H, '#4e2d1a'); for (let x = 0; x < W; x += 40) { frame(c, x + 4, 8, 32, 52, '#6b4026', 2); frame(c, x + 4, 66, 32, 60, '#6b4026', 2); }
+  R(c, 0, 0, W, 6, '#3a2010'); R(c, 0, 126, W, 4, '#3a2010');
+  R(c, 268, 18, 92, 100, '#2a1a10'); grad(c, 272, 22, 84, 92, ['#05081a','#121a40','#22305e']); const r = rng(7); for (let i = 0; i < 30; i++) P(c, 272 + r() * 84, 22 + r() * 50, '#f4ead2');
+  for (const [x, h] of [[278, 22], [292, 30], [306, 46], [322, 26], [338, 36]]) { R(c, x, 114 - h, 10, h, '#0a0d22'); for (let k = 0; k < 3; k++) R(c, x + k * 4, 112 - h, 2, 3, '#0a0d22'); } trap(c, 60, 68, 309, 309, 304, 314, '#0a0d22'); P(c, 309, 58, '#c8343c');
+  R(c, 312, 18, 4, 100, '#2a1a10'); R(c, 268, 66, 92, 3, '#2a1a10');
+  R(c, 38, 22, 3, 150, '#c9a65a'); ell(c, 39, 21, 3, 3, '#f2c14e'); for (let y = 0; y < 48; y++) { const w = 20 + Math.round(Math.sin(y / 5) * 2); R(c, 41, 26 + y, w, 1, y < 16 ? '#f4f4f4' : y < 32 ? '#2f56b0' : '#c8343c'); if (y % 6 === 0) R(c, 41 + w - 3, 26 + y, 2, 1, 'rgba(0,0,0,.2)'); }
+  R(c, 0, 172, W, 44, '#3a2414'); dith(c, 0, 172, W, 44, '#2e1d10'); trap(c, 172, 216, 120, 264, 60, 324, '#7a1e2e');
+};
+BG.cabinetFg = function (c) {
+  R(c, 70, 132, 244, 10, '#3a2414'); R(c, 70, 132, 244, 2, '#6b4026'); R(c, 92, 133, 200, 7, '#2f6b4f'); R(c, 76, 142, 232, 74, '#4e2d1a'); for (let x = 84; x < 300; x += 56) frame(c, x, 150, 48, 56, '#3a2010', 2);
+  R(c, 104, 112, 2, 20, '#c9a65a'); trap(c, 104, 113, 96, 112, 92, 116, '#2f6b4f'); R(c, 98, 130, 14, 3, '#c9a65a'); dtrap(c, 114, 132, 94, 114, 80, 132, '#ffcf6b', .3);
+  R(c, 168, 122, 48, 12, '#f4ecd8'); for (let k = 0; k < 3; k++) R(c, 172, 124 + k * 3, 30, 1, '#9a917e'); ell(c, 208, 130, 3, 3, '#c8343c'); line(c, 222, 120, 236, 132, '#1b1426'); P(c, 222, 120, '#d9b45a');
+};
+BG.print = function (c) {
+  grad(c, 0, 0, W, 170, ['#ede8dc','#ddd6c6','#cfc8b8']); R(c, 0, 170, W, 46, '#9a948a'); for (let x = 0; x < W; x += 24) R(c, x, 170, 1, 46, '#8a8478'); R(c, 0, 186, W, 1, '#8a8478');
+  R(c, 18, 70, 130, 110, '#5d6788'); R(c, 18, 70, 130, 4, '#7d88a8'); R(c, 26, 82, 114, 40, '#4a5470');
+  for (const [x, y, r] of [[44, 140, 14], [84, 140, 14], [124, 140, 14]]) { ell(c, x, y, r, r, '#2a2a33'); ell(c, x, y, r - 3, r - 3, '#6b7488'); ell(c, x, y, 3, 3, '#2a2a33'); }
+  R(c, 30, 160, 106, 20, '#3a4258'); R(c, 60, 30, 46, 40, '#f4ecd8'); for (let y = 36; y < 66; y += 4) R(c, 64, y, 36, 1, '#9a917e');
+  R(c, 208, 26, 156, 118, '#2a2a33'); R(c, 212, 30, 148, 106, '#f4f6fb'); R(c, 212, 30, 148, 12, '#26305a'); for (let i = 0; i < 3; i++) R(c, 216 + i * 6, 34, 4, 4, ['#c8343c','#f2c14e','#6fd08c'][i]);
+  R(c, 220, 50, 80, 4, '#26305a'); for (let y = 60; y < 130; y += 6) R(c, 220, y, 60 + (y * 7) % 70, 2, '#b9c2d6');
+  R(c, 312, 50, 40, 46, '#e3e8f2'); frame(c, 312, 50, 40, 46, '#9aa3b5'); R(c, 280, 144, 12, 10, '#2a2a33'); R(c, 266, 154, 40, 4, '#2a2a33');
+  for (let i = 0; i < 5; i++) { R(c, 160, 172 - i * 4, 34, 4, i % 2 ? '#e8e0cc' : '#f4ecd8'); R(c, 160, 172 - i * 4, 34, 1, '#bdb39a'); }
+};
+BG.yard = function (c, alt) {
+  grad(c, 0, 0, W, 130, alt ? ['#e8b07a','#f2d1a2','#f6e6c8'] : ['#6fa5dc','#a9cdee','#dcebf6']);
+  const block = (x, y, w, h, col, seed) => { R(c, x, y, w, h, col); R(c, x, y, w, 4, '#8a8478'); windowsGrid(c, x + 6, y + 10, Math.floor((w - 8) / 14), Math.floor((h - 14) / 22), 8, 10, 14, 22, seed, .15, '#ffcf6b', '#5b7aa0', '#6b6458'); for (let j = 0; j < Math.floor((h - 14) / 22); j++) for (let i = 0; i < Math.floor((w - 8) / 28); i++) R(c, x + 4 + i * 28, y + 21 + j * 22, 14, 4, '#9c9487'); };
+  block(150, 54, 90, 90, '#cbbfa6', 3); block(-20, 30, 160, 140, '#d6cdb8', 1); block(250, 36, 160, 134, '#c9c2b2', 2);
+  R(c, 0, 168, W, 48, '#6f6b70'); dith(c, 0, 168, W, 48, '#67636a'); ell(c, 300, 200, 26, 4, '#8fb3d9'); ell(c, 90, 206, 18, 3, '#8fb3d9');
+  R(c, 0, 166, W, 3, '#4f4b52');
+  R(c, 40, 140, 2, 30, '#c8343c'); R(c, 76, 140, 2, 30, '#c8343c'); R(c, 40, 140, 38, 2, '#c8343c'); line(c, 52, 142, 50, 160, '#2a2a33'); line(c, 62, 142, 64, 160, '#2a2a33'); R(c, 48, 160, 18, 3, '#f2c14e');
+  R(c, 300, 158, 50, 4, '#7a4a2a'); R(c, 300, 152, 50, 3, '#7a4a2a'); R(c, 304, 162, 3, 8, '#3a2a2a'); R(c, 342, 162, 3, 8, '#3a2a2a');
+  R(c, 246, 120, 2, 50, '#3a3a44'); R(c, 230, 112, 34, 14, '#2f6b4f'); frame(c, 230, 112, 34, 14, '#f4f4f4'); pnum(c, '7', 252, 116, 1, '#f4f4f4'); R(c, 234, 116, 14, 2, '#f4f4f4'); R(c, 234, 120, 10, 2, '#f4f4f4');
+  tree(c, 120, 168, 8, ['#f2c14e','#e8a33a','#d9762b']); tree(c, 360, 170, 12, ['#e8a33a','#c8343c','#f2c14e']);
+};
+BG.boardroom = function (c) {
+  grad(c, 0, 0, W, 170, ['#1b1726','#221c30','#1b1726']); R(c, 0, 170, W, 46, '#141019'); dith(c, 0, 170, W, 46, '#1b1622');
+  R(c, 56, 16, 272, 112, '#6b4026'); R(c, 60, 20, 264, 104, '#b07a45'); dith(c, 60, 20, 264, 104, '#a06a38');
+  const cards = [[74, 30, '#f4ecd8'], [140, 28, '#f2e08a'], [210, 34, '#f4ecd8'], [270, 30, '#f2e08a'], [90, 80, '#f4ecd8'], [168, 76, '#f4ecd8'], [236, 82, '#f2e08a'], [292, 78, '#f4ecd8']];
+  const pins = cards.map(([x, y, col], i) => { R(c, x, y, 30, 22, col); R(c, x + 2, y + 2, 26, 6, i % 3 ? '#cfc4a8' : '#9fd3ff'); for (let k = 0; k < 3; k++) R(c, x + 3, y + 11 + k * 3, 22 - k * 4, 1, '#7a6a52'); ell(c, x + 15, y + 1, 1, 1, '#c8343c'); return [x + 15, y + 1]; });
+  [[0, 1], [1, 5], [5, 2], [2, 3], [3, 7], [4, 5], [6, 7], [1, 6]].forEach(([a, b], i) => line(c, pins[a][0], pins[a][1], pins[b][0], pins[b][1], i % 3 === 2 ? '#f2c14e' : '#e0485a'));
+};
+BG.boardroomFg = function (c) { R(c, 120, 182, 150, 8, '#3a2414'); R(c, 120, 182, 150, 2, '#6b4026'); R(c, 130, 190, 6, 26, '#2a1a10'); R(c, 254, 190, 6, 26, '#2a1a10'); R(c, 150, 168, 2, 14, '#2a2a33'); trap(c, 160, 168, 144, 158, 140, 162, '#2f6b4f'); dtrap(c, 169, 182, 142, 160, 126, 176, '#ffcf6b', .35); };
+function archive(c, desk) {
+  grad(c, 0, 0, W, H, ['#0b0f22','#141a33','#0b0f22']);
+  const vx = 192, vy = 92;
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 6; k++) {
+      const d0 = k / 6, d1 = (k + .85) / 6;
+      const x0 = side < 0 ? Math.round(150 * d0) : Math.round(W - 150 * d0), x1 = side < 0 ? Math.round(150 * d1) : Math.round(W - 150 * d1);
+      const top0 = Math.round(0 + (vy - 50) * d0), bot0 = Math.round(216 - (216 - vy - 40) * d0), top1 = Math.round((vy - 50) * d1), bot1 = Math.round(216 - (216 - vy - 40) * d1);
+      const [xa, xb, ta, ba, tb, bb] = side < 0 ? [x0, x1, top0, bot0, top1, bot1] : [x1, x0, top1, bot1, top0, bot0];
+      vtrap(c, xa, xb, ta, ba, tb, bb, '#2a2f4a');
+      for (let s = 1; s < 7; s++) { const f = s / 7; for (let x = xa; x <= xb; x++) { const kk = (x - xa) / ((xb - xa) || 1); const t = ta + (tb - ta) * kk, b = ba + (bb - ba) * kk; const y = Math.round(t + (b - t) * f); P(c, x, y, '#5d6788'); if ((x + s * 3 + k) % 5 < 3) { const bh = Math.max(2, Math.round((b - t) / 7) - 2); R(c, x, y - bh, 1, bh, ['#c99a3a','#9a8a6a','#7a6a52','#b07a45'][(x + s + k) % 4]); } } }
+    }
+  }
+  R(c, 160, 70, 64, 80, '#060914'); for (let k = 0; k < 4; k++) dtrap(c, 0, 216, 168 + k * 14, 172 + k * 14, 130 + k * 40, 150 + k * 40, '#9fd3ff', .08);
+  R(c, 0, 176, W, 40, '#0f1428'); trap(c, 150, 216, 170, 214, 60, 324, '#141a33');
+  if (desk) { R(c, 90, 168, 204, 8, '#6b4026'); R(c, 90, 168, 204, 2, '#a8693a'); R(c, 96, 176, 6, 40, '#3a2010'); R(c, 282, 176, 6, 40, '#3a2010'); for (const [x, col] of [[120, '#c99a3a'], [200, '#5d6788']]) { R(c, x, 156, 56, 12, col); R(c, x + 2, 152, 52, 6, '#f4ecd8'); frame(c, x, 156, 56, 12, '#3a2010'); } }
+}
+BG.archive = function (c) { archive(c, false); };
+BG.archdesk = function (c) { archive(c, true); };
+BG.docworld = function (c) {
+  grad(c, 0, 0, W, 80, ['#0f1330','#1b2140','#33468a']);
+  const r = rng(2); for (let i = 0; i < 20; i++) { const x = r() * W, y = r() * 60; P(c, x, y, '#9fd3ff'); }
+  trap(c, 80, 216, 160, 224, -120, 504, (t) => t < .3 ? '#d8ccaa' : t < .6 ? '#e6dabb' : '#efe3c4');
+  for (let k = 1; k < 14; k++) { const t = Math.pow(k / 14, 1.7); const y = Math.round(80 + t * 136); const l = 160 + (-120 - 160) * t, rr = 224 + (504 - 224) * t; let x = l + 6; const rs = rng(k * 9); while (x < rr - 6) { const w = (8 + rs() * 30) * (0.2 + t); R(c, x, y, w, Math.max(1, Math.round(t * 3)), '#9a917e'); x += w + (3 + rs() * 6) * (0.3 + t); } }
+  glyph(c, 'З', 10, 40, 9, '#f4ecd8', '#6b5a3a'); glyph(c, 'А', 62, 62, 6, '#efe3c4', '#6b5a3a'); glyph(c, 'К', 302, 52, 7, '#efe3c4', '#6b5a3a'); glyph(c, 'О', 338, 30, 8, '#f4ecd8', '#6b5a3a'); glyph(c, 'Н', 260, 72, 4, '#e6dabb', '#6b5a3a'); glyph(c, '§', 112, 74, 3, '#e6dabb', '#6b5a3a');
+};
+BG.hub = function (c) {
+  grad(c, 0, 0, W, H, ['#0d0f20','#1b1830','#141226']);
+  ell(c, 192, 196, 170, 26, '#232042'); ell(c, 192, 196, 140, 20, '#1b1830'); ell(c, 192, 196, 100, 14, '#232042'); ell(c, 192, 196, 60, 8, '#2a2650');
+  const door = (x, col, lab) => { R(c, x - 2, 58, 52, 96, '#0a0a16'); ell(c, x + 24, 60, 26, 16, '#0a0a16', 'top'); R(c, x, 60, 48, 92, '#1b1426'); ell(c, x + 24, 62, 24, 14, '#1b1426', 'top'); frame(c, x, 60, 48, 92, col, 2); glow(c, x + 24, 110, 34, col, .3); pnum(c, lab, x + 20, 26, 3, col); };
+  door(52, '#ffb347', '1'); door(168, '#7fd6ff', '2'); door(284, '#6fd08c', '3');
+};
+BG.blueprint = function (c) {
+  R(c, 0, 0, W, H, '#16306a'); for (let x = 0; x < W; x += 12) R(c, x, 0, 1, H, '#1d3c80'); for (let y = 0; y < H; y += 12) R(c, 0, y, W, 1, '#1d3c80');
+  const box = (x, y, w, h) => { frame(c, x, y, w, h, '#cfe3f0'); R(c, x + 2, y + 2, w - 4, 2, '#9fc0e0'); };
+  box(20, 30, 60, 30); box(110, 30, 60, 30); box(200, 30, 60, 30); box(290, 30, 70, 30); box(110, 100, 60, 30); box(200, 100, 60, 30); box(290, 100, 70, 30);
+  for (const [a, b, y] of [[80, 110, 45], [170, 200, 45], [260, 290, 45]]) { R(c, a, y, b - a, 1, '#cfe3f0'); P(c, b - 2, y - 1, '#cfe3f0'); P(c, b - 2, y + 1, '#cfe3f0'); }
+  for (const x of [140, 230, 324]) { R(c, x, 60, 1, 40, '#f2c14e'); }
+  R(c, 0, 176, W, 40, '#10234f');
+};
+BG.final = function (c) { grad(c, 0, 0, W, H, ['#05060f','#0d1024','#141a33']); };
+
+/* ================= ДИНАМИКА СЦЕН ================= */
+const DYN = {
+  leaves(c, t, n = 18, cols = ['#f2c14e','#e8a33a','#d9762b','#c8343c']) { for (let i = 0; i < n; i++) { const s = (i * 9301 + 49297) % 233280 / 233280; const y = ((s * H + t * (0.012 + s * .01)) % (H + 20)) - 10; const x = (s * 997 % W + Math.sin(t / 700 + i) * 10 + t * .004 * (i % 3)) % W; R(c, x, y, 2, 1 + (i % 2), cols[i % cols.length]); } },
+  dust(c, t, n = 40, col = '#9fd3ff') { for (let i = 0; i < n; i++) { const s = ((i * 7919) % 1000) / 1000; const x = (s * W + Math.sin(t / 2000 + i) * 8) % W; const y = (((1 - s) * H - t * .004 * (1 + i % 3)) % H + H) % H; if ((Math.floor(t / 300) + i) % 4) P(c, x, y, col); } },
+  flag(c, t, x, y) { const cols = ['#f4f4f4','#2f56b0','#c8343c']; for (let i = 0; i < 18; i++) { const dy = Math.round(Math.sin(t / 220 - i / 3) * 1.5); for (let k = 0; k < 3; k++) R(c, x + i, y + k * 4 + dy, 1, 4, cols[k]); } },
+  sec: (t) => Math.floor(t / 1000) % 60,
+  sheets(c, t) { for (let i = 0; i < 6; i++) { const p = ((t / 2400 + i / 6) % 1); const x = 70 + p * 250 + Math.sin(p * 9 + i) * 10, y = 60 - Math.sin(p * Math.PI) * 50 + i * 6; R(c, x, y, 10, 7, '#f4ecd8'); R(c, x, y + 6, 10, 1, '#cfc4a8'); } },
+  birds(c, t) { for (let i = 0; i < 3; i++) { const x = (t * .02 + i * 90) % (W + 40) - 20, y = 20 + i * 9 + Math.sin(t / 300 + i) * 2; const f = Math.floor(t / 200 + i) % 2; P(c, x, y, '#2a2a33'); P(c, x - 1, y - f, '#2a2a33'); P(c, x + 1, y - f, '#2a2a33'); P(c, x - 2, y - 1 + f, '#2a2a33'); P(c, x + 2, y - 1 + f, '#2a2a33'); } }
+};
+
+</script>
+<script>
+/* ================= ИГРА 2 · «ТИХИЙ ЧАС» ================= */
+const GAME = { id: 'tihiy', title: 'Тихий час', calm0: 74 };
+
+/* ================= ПЕРСОНАЖИ ================= */
+const CH = {
+  pushnin: { name: 'Евгений Пушнин', role: 'Депутат, «Единая Миска», карточка № 212', bg: '#3a3040', pal: { F:'#d8d2c8', D:'#b2aa9c', L:'#f4efe6', E:'#7fb7e8', S:'#5a4030', s:'#3e2c20', T:'#efe6d6', R:'#2f6b4f', X:'#d9b45a', Y:'#7a1e2e' }, feat: ['pin'],
+    look: 'Светло-серый кот в коричневом костюме, зелёный галстук, партийный значок.', nature: 'Неглупый, ироничный, привык не высовываться. Третий срок, второй ряд.', motive: 'Сохранить место, ипотеку и остатки самоуважения. Не обязательно в этом порядке.', lines: ['Быстро у нас работают. Когда надо.','Палец не дрожит. Это хуже всего.'], anim: 'Покачивание, моргание, говорит.', func: 'Глаза игрока. Все его выборы ничего не меняют — в этом и сюжет.' },
+  murlykin: { name: 'Фрол Мурлыкин', role: 'Депутат, сорок лет в Палате', bg: '#33302a', pal: { F:'#9a9286', D:'#77705f', L:'#d8d2c4', E:'#e8c14b', S:'#4a4f62', s:'#363a4a', T:'#e8e4da', R:'#7a1e2e', M:'#5a5248', G:'#c9ccd6' }, feat: ['tabby','glasses'],
+    look: 'Старый серый полосатый кот, очки, потёртый серый костюм.', nature: 'Циник с добрым сердцем. Пережил трёх вождей и одну перестройку.', motive: 'Дожить до пенсии и научить хоть кого-то видеть.', lines: ['Никогда не смотри портрету в глаза.','У нас кворум по карточкам.'], anim: 'Поправляет очки, говорит вполголоса.', func: 'Проводник и голос памяти.' },
+  kogtev: { name: 'Аркадий Когтев', role: 'Глава Аппарата Верховного Кота', bg: '#24131a', pal: { F:'#26232e', D:'#17151d', L:'#3a3644', E:'#e8c14b', S:'#141219', s:'#0b0a10', T:'#e8e4da', R:'#7a1e2e', X:'#c8343c' }, feat: ['pin'],
+    look: 'Чёрный кот в чёрном костюме, бордовый галстук, золотые глаза.', nature: 'Вежлив, улыбчив, никогда не повышает голос.', motive: 'Чтобы всё было спокойно. Особенно для него.', lines: ['Это формальность, коллеги.','Мы же не звери.'], anim: 'Улыбается, складывает лапы.', func: 'Настоящая власть, которая формально ничем не управляет.' },
+  speaker: { name: 'Пушистая-Мягкова', role: 'Председатель Палаты Депутатов', bg: '#3a1f4a', pal: { F:'#f6f3ee', D:'#d8d2c8', L:'#ffffff', P:'#f2a8b8', E:'#9a6fd0', S:'#6a3a8a', s:'#4e2a66', T:'#f4f4f4', R:'#c9a65a' }, feat: ['ruff'],
+    look: 'Белая пушистая кошка в фиолетовом жакете.', nature: 'Читает быстро, не поднимая глаз.', motive: 'Уложиться в регламент, который утром изменили.', lines: ['Вопросов нет. Принято.'], anim: 'Стучит молоточком.', func: 'Голос процедуры без содержания.' },
+  sherstobit: { name: 'Шерстобит', role: 'Председатель комитета по безопасности и спокойствию', bg: '#3a2a1a', pal: { F:'#e58a3a', D:'#b9642a', L:'#f6d2a6', E:'#7fd36a', S:'#5d6788', s:'#454d68', T:'#efe6d6', R:'#33468a', M:'#a84f1c', G:'#d9b45a' }, feat: ['tabby','glasses','papers'],
+    look: 'Рыжий полосатый кот в синем костюме, очки, стопка бумаг.', nature: 'Ставит рекорды скорости.', motive: 'Отчитаться, что всё прошло без замечаний.', lines: ['Ваша поправка не поступала.'], anim: 'Листает бумаги, не читая.', func: 'Комитет, который ничего не рассматривает.' },
+  seifov: { name: 'Аристарх Сейфов', role: 'Первый Пушистый банк', bg: '#5a4a2a', pal: { F:'#f6f3ee', D:'#d8d2c8', L:'#ffffff', P:'#f2a8b8', E:'#5fb3e8', S:'#e7dcc2', s:'#c8bb9c', T:'#ffffff', R:'#d9a43a', Q:'#6b4a2a', X:'#f2c14e' }, feat: ['ruff','briefcase'],
+    look: 'Белый ангорский кот, кремовый костюм, золотой галстук, портфель.', nature: 'Приветлив, считает всё, включая людей.', motive: 'Доступ к реестру данных и новые проценты по кредитам.', lines: ['Я пришёл сказать спасибо — заранее.'], anim: 'Поднимает портфель.', func: 'Бизнес, который выигрывает от репрессий.' },
+  ten: { name: 'Полковник Тень', role: 'Ведомство спокойствия', bg: '#1f2a1f', pal: { F:'#5a5248', D:'#433d35', L:'#8a8276', E:'#d0d04b', S:'#3a4a3a', s:'#2a362a', T:'#3a4a3a', R:'#2a362a', H:'#2a362a', V:'#141a14', X:'#c8343c' }, feat: ['cap','belt'],
+    look: 'Тёмно-серый кот в форменной фуражке и кителе.', nature: 'Спокоен, вежлив, шутит так, что не смешно.', motive: 'Расширять список признаков. Пункт за пунктом.', lines: ['Мы открыты к предложениям граждан.','Бумага — вещь непрочная.'], anim: 'Стоит неподвижно.', func: 'Ведомство, которое само решает, что запрещено, и само рассматривает жалобы.' },
+  dvorovy: { name: 'Тихон Дворовый', role: 'Депутат, «Дворовый фронт»', bg: '#4a1a22', pal: { F:'#26232e', D:'#17151d', L:'#f1ede4', E:'#9ad04b', S:'#a8323e', s:'#7c2430', T:'#a8323e', R:'#a8323e', Y:'#e59aa8' }, feat: ['tux','scar'],
+    look: 'Чёрно-белый кот-«смокинг» с надорванным ухом, красный свитер.', nature: 'Резкий, смелый, немного наивный.', motive: 'Сорвать две трети. Хотя бы попытаться.', lines: ['Ты — один. Начни с себя.'], anim: 'Стучит лапой.', func: 'Последняя оппозиция; исчезает до голосования, но «голосует».' },
+  glasha: { name: 'Глафира Эфирова', role: 'Ведущая, «Вести Спокойствия»', bg: '#4a1a1a', pal: { F:'#efe0c4', D:'#cdb894', L:'#5a3a2e', P:'#5a3a2e', E:'#6fb7e8', S:'#c8343c', s:'#9a2430', T:'#c8343c', R:'#c8343c', M:'#5a3a2e', N:'#f4ecd8' }, feat: ['mask','press'],
+    look: 'Сиамская кошка в красном платье с бейджем канала.', nature: 'Профессиональна. Верит, что монтаж — это не ложь.', motive: 'Хороший хронометраж.', lines: ['У нас не врут. У нас монтируют.'], anim: 'Улыбается в камеру.', func: 'Пропаганда как технология.' },
+  barsik: { name: 'Барсик', role: 'Сосед с третьего этажа', bg: '#2c4a38', pal: { F:'#8d93a6', D:'#6a6f82', L:'#c9ccd6', E:'#e8c14b', S:'#e8e4da', s:'#c9c4b8', T:'#e8e4da', R:'#e8e4da', M:'#5d6378' }, feat: ['tabby'],
+    look: 'Серый полосатый кот в белой майке.', nature: 'Добродушный, практичный, совсем не злой.', motive: 'Одобренная ипотека.', lines: ['Я на Петровых сообщил не со зла.'], anim: 'Чешет затылок.', func: 'Обычный гражданин, которого система сделала доносчиком.' },
+  senator: { name: 'Сенатор Невскуров', role: 'Совет Регионов', bg: '#1c3a7a', pal: { F:'#6f7f99', D:'#566480', L:'#a9b7cc', E:'#9ad04b', S:'#2f56b0', s:'#21408a', T:'#f4f4f4', R:'#2a2f45', X:'#f2c14e' }, feat: ['pin','book'],
+    look: 'Дымчатый кот в синем костюме с папкой.', nature: 'Неторопливый, говорит по телефону.', motive: 'Не задерживать.', lines: ['Мы одобряем то, что уже одобрили.'], anim: 'Держит телефон у уха.', func: 'Верхняя палата, превращённая в телефонный звонок.' },
+  verkhovny: { name: 'Верховный Кот', role: 'Глава Союза Пушистых Республик', bg: '#2a0f14', pal: { F:'#3a3644', D:'#26232e', L:'#5a5468', E:'#f2c14e', K:'#7a1e2e', S:'#1b1726', s:'#0f0c16', T:'#e8e4da', R:'#c8343c' }, feat: [],
+    look: 'Тёмный кот в тени, видны только золотые глаза. Вымышленный образ.', nature: 'Говорит мало. Не нуждается в словах.', motive: 'Спокойствие.', lines: ['Спокойствие — это когда никто не задаёт вопросов.'], anim: 'Неподвижен.', func: 'Власть без процедуры.' },
+  grey1: { name: 'Человек в сером', role: 'Сотрудник', pal: { F:'#9aa3b5', S:'#5d6370', s:'#454a55', T:'#e8e4da', R:'#5d6370' }, feat: [], hide: true, look: '—', nature: '—', motive: '—', lines: ['Это формальность.'], anim: '—', func: 'Фон.' },
+  grey2: { name: 'Второй в сером', role: 'Сотрудник', pal: { F:'#7d8aa3', S:'#5d6370', s:'#454a55', T:'#e8e4da', R:'#5d6370' }, feat: [], hide: true, look: '—', nature: '—', motive: '—', lines: ['Пройдёмте.'], anim: '—', func: 'Фон.' },
+  clerk1: { name: 'Член комитета', role: 'Депутат', pal: { F:'#5a5248', S:'#4a4f62', s:'#363a4a', T:'#e8e4da', R:'#5d6788' }, feat: ['glasses'], hide: true, look: '—', nature: '—', motive: '—', lines: ['…'], anim: '—', func: 'Фон.' },
+  clerk2: { name: 'Член комитета', role: 'Депутат', pal: { F:'#e8e2d6', L:'#ffffff', E:'#6fb7e8', S:'#7a1e2e', s:'#5a1520', T:'#f4f4f4', R:'#7a1e2e', M:'#9a9286' }, feat: ['tabby'], hide: true, look: '—', nature: '—', motive: '—', lines: ['…'], anim: '—', func: 'Фон.' },
+  n1: { name: 'Сосед', role: 'Житель двора', pal: { F:'#a7a9b3', S:'#7a4a2a', T:'#7a4a2a', R:'#7a4a2a' }, feat: [], hide: true, look: '—', nature: '—', motive: '—', lines: ['…'], anim: '—', func: 'Фон.' },
+  n2: { name: 'Соседка', role: 'Жительница двора', pal: { F:'#f6f3ee', L:'#ffffff', S:'#c8343c', T:'#c8343c', R:'#c8343c', M:'#e58a3a' }, feat: ['tabby'], hide: true, look: '—', nature: '—', motive: '—', lines: ['…'], anim: '—', func: 'Фон.' },
+  tv: { name: 'Телевизор', role: 'Первый Пушистый канал' },
+  narr: { name: '', role: '' }
+};
+
+/* ================= ИСТОЧНИКИ (исторические параллели) ================= */
+const SRC = {
+  ushFire: { t: 'Энциклопедия Холокоста (USHMM): поджог Рейхстага', url: 'https://encyclopedia.ushmm.org/content/en/article/the-reichstag-fire', cat: 'hist' },
+  ushEnable: { t: 'Энциклопедия Холокоста (USHMM): закон о чрезвычайных полномочиях 1933 г.', url: 'https://encyclopedia.ushmm.org/content/en/article/the-enabling-act', cat: 'hist' },
+  wikiEnable: { t: 'Wikipedia: Enabling Act of 1933 (итоги голосования, кворум)', url: 'https://en.wikipedia.org/wiki/Enabling_Act_of_1933', cat: 'hist' },
+  wikiReich: { t: 'Wikipedia: Reichstag (Nazi Germany) — заседания, единогласие, «певческий клуб»', url: 'https://en.wikipedia.org/wiki/Reichstag_(Nazi_Germany)', cat: 'hist' },
+  stasi: { t: 'Бундесархив, архив Штази: неофициальные сотрудники МГБ ГДР', url: 'https://www.bundesarchiv.de/en/stasi-records-archive/education/what-was-the-state-security/the-unofficial-collaborators-of-the-mfs/', cat: 'hist' },
+  merics: { t: 'MERICS: «Социальный рейтинг в Китае — миф и реальность» (2022)', url: 'https://merics.org/en/opinion/chinas-social-credit-score-untangling-myth-reality', cat: 'research' }
+};
+const SRC_CATS = { hist: 'Исторические источники', research: 'Исследования и аналитика' };
+
+/* ================= УЛИКИ ================= */
+const EV = {
+  ev_envelope: { t: 'Конверт без автора', kind: 'документ', st: 'fic', x: 'Законопроект пришёл из Аппарата, без подписи и номера.' },
+  ev_law: { t: 'Закон о тишине', kind: 'документ', st: 'fic', x: 'Пять статей. Пятая позволяет приостанавливать любые законы указом.' },
+  ev_bank: { t: 'Банк благодарит', kind: 'интерес', st: 'fic', x: 'Сейфов получит реестр данных и поднимет ставки для «беспокойных».' },
+  ev_list: { t: 'Перечень из 112 пунктов', kind: 'документ', st: 'fic', x: 'Признаки «беспокойства» определяет само ведомство.' },
+  ev_tikh: { t: 'Пустой кабинет 219', kind: 'наблюдение', st: 'fic', x: 'Правозащитница исчезла ночью. Охрана говорит: «тут никто не работал».' },
+  ev_amend: { t: 'Поправка «не поступала»', kind: 'наблюдение', st: 'fic', x: 'Квитанция о подаче есть, поправки нет.' },
+  ev_resign: { t: 'Заявления с открытой датой', kind: 'документ', st: 'fic', x: 'У каждого депутата — подписанное «его подписью» заявление о сложении полномочий.' },
+  ev_dvor: { t: '«Беседа» с Дворовым', kind: 'наблюдение', st: 'fic', x: 'Лидера оппозиции увели перед голосованием.' },
+  ev_450: { t: '450 — 0', kind: 'голосование', st: 'fic', x: 'Единогласно. Включая отсутствующих и голосовавших «против».' },
+  ev_phone: { t: 'Одобрено до звонка', kind: 'документ', st: 'fic', x: 'Журнал Совета Регионов: 14:58. Звонок: 15:00.' },
+  ev_sign: { t: 'Сухие чернила', kind: 'наблюдение', st: 'fic', x: 'Подпись на законе поставлена до голосования.' },
+  ev_court: { t: 'Указ о суде', kind: 'документ', st: 'fic', x: 'Конституционный суд «реорганизован» указом с номером на единицу меньше закона.' },
+  ev_edit: { t: 'Монтаж', kind: 'наблюдение', st: 'fic', x: 'Любой ваш ответ в эфире превращается в «исторический закон, единогласно».' },
+  ev_stamp: { t: 'Штамп типографии', kind: 'поворот', st: 'fic', x: 'Законопроект напечатан за 21 день до пожара, который стал поводом.' },
+  p_fire: { t: 'Поджог Рейхстага, 1933', kind: 'параллель', st: 'fact', x: '27.02.1933 горит Рейхстаг; вину возлагают на коммунистов. 28.02 указ приостанавливает свободу слова, печати и собраний. Происхождение пожара до сих пор не прояснено.', src: ['ushFire'] },
+  p_enable: { t: 'Закон о полномочиях, 1933', kind: 'параллель', st: 'fact', x: '23.03.1933: 444 «за», 94 «против» (только СДПГ). 81 депутат-коммунист не допущен и задержан; кворум пересчитан без них. Правительство получило право издавать законы без парламента.', src: ['ushEnable','wikiEnable'] },
+  p_singing: { t: '«Самый дорогой певческий клуб»', kind: 'параллель', st: 'fact', x: 'После 1933 г. Рейхстаг собирался редко, голосовал единогласно и в 1933–1939 гг. принял лишь четыре закона. Его прозвали «самым дорогим певческим клубом Германии».', src: ['wikiReich'] },
+  p_stasi: { t: 'Неофициальные сотрудники Штази', kind: 'параллель', st: 'fact', x: 'В 1989 г. у МГБ ГДР было около 189 000 неофициальных сотрудников — примерно один на 90 граждан. Они доносили на коллег, друзей и соседей.', src: ['stasi'] },
+  p_credit: { t: 'Миф о едином рейтинге', kind: 'параллель', st: 'fact', x: 'Единого общенационального балла граждан в Китае нет; местные пилоты с баллами частично свернули. «Индекс спокойствия» — гипербола, а не описание реальной системы.', src: ['merics'] }
+};
+const BOARD = {
+  pos: { ev_envelope:[0,0], ev_law:[1,0], ev_list:[2,0], ev_stamp:[3,0], ev_bank:[0,1], ev_tikh:[1,1], ev_amend:[2,1], ev_resign:[3,1], ev_dvor:[0,2], ev_450:[1,2], ev_phone:[2,2], ev_sign:[3,2], ev_court:[0,3], ev_edit:[1,3], p_fire:[2,3], p_enable:[3,3], p_singing:[0,4], p_stasi:[1,4], p_credit:[2,4] },
+  links: [ ['ev_envelope','ev_stamp','f','тот же конверт'], ['ev_stamp','p_fire','h','повод заранее?'], ['ev_law','ev_list','f','ст. 3'], ['ev_law','ev_court','f','ст. 5 + указ'], ['ev_dvor','ev_450','f','отсутствовал, но «за»'], ['ev_450','p_singing','h','единогласие'], ['ev_450','p_enable','h','кворум без оппозиции'], ['ev_sign','ev_phone','f','решено заранее'], ['ev_amend','ev_resign','f','давление'], ['ev_bank','ev_list','h','кому выгодно'], ['ev_edit','ev_450','f','одна картинка'] ]
+};
+
+/* ================= ДОКУМЕНТЫ ================= */
+const DOCS = {
+  law: { t: 'Закон «О единой прозрачности граждан и о тишине в обществе»', fic: true, html: `<p class="dhead">СОЮЗ ПУШИСТЫХ РЕСПУБЛИК<br>ЗАКОН<br>«О единой прозрачности граждан и о тишине в обществе»</p><p><b>Статья 1.</b> Все сведения о гражданах — переписка, покупки, перемещения, здоровье — передаются в Единый реестр в реальном времени. <mark>Согласие гражданина не требуется.</mark></p><p><b>Статья 2.</b> Каждому гражданину присваивается индекс спокойствия. Индекс ниже установленного порога ограничивает право на труд, обучение и передвижение.</p><p><b>Статья 3.</b> Распространение беспокойства влечёт административную, при повторении — уголовную ответственность. <mark>Перечень признаков беспокойства утверждает Ведомство спокойствия.</mark></p><p><b>Статья 4.</b> Граждане обязаны сообщать о признаках беспокойства у окружающих. Сообщение повышает индекс, недонесение — понижает.</p><p><b>Статья 5.</b> <mark>В период особой тишины действие иных законов может приостанавливаться указом Верховного Кота.</mark></p><p class="dnote">Автор не указан. Номер не присвоен. Гриф: «Аппарат Верховного Кота. Срочно».</p>` },
+  resign: { t: 'Заявление о сложении полномочий', fic: true, html: `<p class="dhead">Председателю Палаты Депутатов</p><p>Я, Пушнин Евгений Аркадьевич, добровольно и без принуждения слагаю с себя полномочия депутата в связи с переходом на другую работу.</p><p>Дата: «___» __________ 20__ г.</p><p>Подпись: <i>(подпись, очень похожая на мою)</i></p><p class="dnote">Выдано всем 450 депутатам. Хранится в Аппарате.</p>` },
+  court: { t: 'Указ о реорганизации Конституционного суда', fic: true, html: `<p class="dhead">УКАЗ ВЕРХОВНОГО КОТА<br>№ 1121</p><p>В целях повышения спокойствия:</p><p>1. Реорганизовать Конституционный суд путём присоединения к Аппарату Верховного Кота.</p><p>2. Функции проверки законов на соответствие Конституции возложить на Аппарат.</p><p class="dnote">Закон о тишине имеет № 1122.</p>` },
+  stamp: { t: 'Оборот конверта', fic: true, html: `<p class="dhead">ТИПОГРАФИЯ АППАРАТА ВЕРХОВНОГО КОТА</p><p>Заказ № 77-Т. Тираж: 451 экз.</p><p>Отпечатано: <mark>за 21 день до пожара в Центральном архиве</mark>.</p><p class="dnote">451-й экземпляр — для Верховного Кота. С подписью.</p>` }
+};
+
+/* ================= СЦЕНЫ ================= */
+const SCENES = [
+ { id:'s01', title:'Ночь пожара', ts:{d:0,t:'02:40',k:'fic'}, loc:'Улица перед Палатой, ночь', bg:'street_ev', fx:['fire','flag'], sat:1, cap:'ПОЖАР',
+   actors:[{c:'pushnin',x:30,y:112}], camera:'Ночная улица, фасад в огне.',
+   lines:[
+    {w:'narr', x:'Столица Союза Пушистых Республик. Ночь. Горит Центральный архив — тот самый, где хранятся подлинники Конституции.', cap:'ПОЖАР'},
+    {w:'pushnin', x:'Евгений Пушнин, депутат. Третий срок, второй ряд, кнопка номер 212. Меня разбудил не пожар, а телефон.', cap:'212'},
+    {w:'tv', x:'Срочное сообщение. Поджог совершён врагами спокойствия. Личности поджигателей установлены.'},
+    {w:'pushnin', x:'Пожар ещё горит, а личности уже установлены. Быстро у нас работают. Когда надо.', cap:'БЫСТРО', ev:'p_fire'},
+    {w:'narr', x:'Огонь видно из любого окна столицы. Утром его покажут по всем каналам. Сорок раз подряд.'},
+    {w:'pushnin', x:'Ложусь спать. Завтра заседание. Я ещё не знаю, что оно последнее.', cap:'ЗАВТРА'} ],
+   visuals:'Ночная улица, фасад архива в огне, дым, отсветы на мостовой.', anim:'Пламя мерцает постоянно; дым поднимается. Переход: циферблат, время вперёд.', interaction:'—',
+   facts:[{t:'Параллель: 27 февраля 1933 г. горел Рейхстаг; нацистское руководство обвинило коммунистов, 28 февраля указ приостановил свободу слова, печати и собраний. Происхождение пожара до сих пор не прояснено.', src:['ushFire']}], interp:[], fiction:['Страна, город, архив и персонажи вымышлены.'],
+   hot:[], out:{type:'time',f:[192,70],dir:1,d:'Время вперёд до утра.'}, next:'s02' },
+
+ { id:'s02', title:'Утро депутата', ts:{d:1,t:'07:30',k:'fic'}, loc:'Кабинет 212', bg:'office', fg:'officeFg', fx:['portraits'], sat:.85, cap:'ИНДЕКС',
+   actors:[{c:'pushnin',x:150,y:96}], camera:'Кабинет, стол, телефон в лапе.',
+   lines:[
+    {w:'narr', x:'Утро. Кабинет 212. На столе — кофе. На телефоне — новое приложение. Его ночью поставили всем депутатам, не спросив.', cap:'ИНДЕКС', ui:'calm'},
+    {w:'pushnin', x:'«Индекс спокойствия: 74». Говорят, ниже пятидесяти не выпускают за границу. Ниже тридцати — лучше вообще не говорить.', cap:'74', ev:'p_credit'},
+    {w:'pushnin', x:'Ладно. С чего начнём утро?', choices:[{l:'Почитать зарубежные новости',b:'news',calm:-3},{l:'Позвонить жене',b:'wife'},{l:'Налить коньяку и ничего не читать',b:'cognac',calm:2},{l:'Хватит, на работу',end:true}]},
+    {w:'narr', x:'Звонок из Аппарата: «Евгений Аркадьевич, сегодня важный день. Будьте на месте с девяти. И не волнуйтесь — волнение вредно для индекса».', cap:'ВАЖНЫЙ ДЕНЬ'} ],
+   blocks:{
+    news:[{w:'pushnin', x:'Открываю зарубежный сайт. «Страница недоступна». Через VPN — открылась.'},{w:'narr', x:'Телефон коротко вибрирует. Индекс спокойствия: −3.'},{w:'pushnin', x:'Они видят даже это. Отлично. Значит, видят и то, как я им сочувствую.'}],
+    wife:[{w:'pushnin', x:'— Галя, ты как? — Женя, не звони мне на этот номер. Вечером позвони, с домашнего. — С какого домашнего, у нас нет домашнего… Гудки.'},{w:'narr', x:'Индекс не изменился. Видимо, бояться правильно — это нормально.'}],
+    cognac:[{w:'narr', x:'Коньяк — подарок Аппарата ко Дню депутата. Пять звёзд, герб на этикетке. Индекс спокойствия: +2.'},{w:'pushnin', x:'Пить системный коньяк полезно для рейтинга. Запомню. Жаль, что в девять утра.'}] },
+   visuals:'Ночной кабинет из «Кошачьей Думы» в утреннем свете, портрет на стене.', anim:'Переход: три шага к двери.', interaction:'Выбор утреннего занятия меняет индекс, но не сюжет.',
+   facts:[{t:'«Индекс спокойствия» — гипербола. Единого общенационального балла граждан в Китае, о котором часто пишут, не существует; местные пилоты с баллами частично свернули.', src:['merics']}], interp:[], fiction:['Приложение и индекс вымышлены.'],
+   hot:[{x:130,y:110,w:64,h:50,label:'Пушнин',a:{t:'char',c:'pushnin'}}], out:{type:'walk',f:[192,108],d:'Три шага к двери.'}, next:'s03' },
+
+ { id:'s03', title:'Конверт', ts:{d:1,t:'09:00',k:'fic'}, loc:'Вестибюль Палаты', bg:'lobby', fx:['portraits','chandelier'], sat:.8, cap:'ПОРТРЕТ',
+   actors:[{c:'grey1',x:30,y:112},{c:'murlykin',x:210,y:112},{c:'pushnin',x:290,y:112}], camera:'Вестибюль, портреты вместо картин.',
+   lines:[
+    {w:'narr', x:'Вестибюль Палаты Депутатов. С картин на стенах исчезли пейзажи. Теперь в обеих рамах — один и тот же портрет.', cap:'ПОРТРЕТ'},
+    {w:'murlykin', x:'Фрол Мурлыкин, сорок лет в этом здании. Пережил трёх вождей и одну перестройку. Совет бесплатный: не смотри портрету в глаза. Он смотрит в ответ.', cap:'СОВЕТ'},
+    {w:'grey1', x:'Депутату Пушнину. Лично в лапы. Распишитесь здесь, здесь и вот здесь.', sfx:'paper'},
+    {w:'narr', x:'Запечатанный конверт. Ни автора, ни номера. Только гриф: «Аппарат Верховного Кота. Срочно».', ev:'ev_envelope'},
+    {w:'pushnin', x:'Законопроект? А кто его вносил? Тут нет подписи.'},
+    {w:'murlykin', x:'Ему не нужна подпись, Женя. Ему нужна твоя.', cap:'ПОДПИСЬ'},
+    {w:'narr', x:'Внутри — пять статей. «О единой прозрачности граждан и о тишине в обществе».', ui:'law', ev:'ev_law'},
+    {w:'murlykin', x:'Первая, вторая, третья, четвёртая — это для народа. Пятая — для нас. Прочти её внимательно.', cap:'СТАТЬЯ 5'},
+    {w:'pushnin', x:'«В период особой тишины действие иных законов может приостанавливаться указом». Иных — это каких?'},
+    {w:'murlykin', x:'Всех, Женя. Всех иных.', cap:'ВСЕХ'} ],
+   visuals:'Вестибюль: колонны, люстра, в рамах — портреты Верховного Кота.', anim:'Переход: погружение в текст закона.', interaction:'Клик по конверту — закон крупным планом.',
+   facts:[], interp:[], fiction:['Закон и Аппарат вымышлены.'],
+   hot:[{x:98,y:144,w:32,h:22,label:'Конверт',a:{t:'doc',d:'law',ev:'ev_law'}},{x:210,y:112,w:64,h:56,label:'Мурлыкин',a:{t:'char',c:'murlykin'}}], out:{type:'docdive',f:[192,120],d:'Камера ныряет в текст закона.'}, next:'s04' },
+
+ { id:'s04', title:'Посетители', ts:{d:1,t:'10:00',k:'fic'}, loc:'Коридор', bg:'corridor', fx:['portraits','doorglow'], sat:.75, cap:'ОЧЕРЕДЬ',
+   actors:[{c:'seifov',x:46,y:110},{c:'ten',x:276,y:110}], camera:'Коридор, двое у стен, пустая дверь в глубине.',
+   lines:[
+    {w:'narr', x:'До заседания комитета — час. В коридоре очередь. Но все пришли не спорить, а убедиться, что вы всё поняли.', cap:'ОЧЕРЕДЬ', choices:[{l:'Банкир Сейфов',b:'seifov'},{l:'Полковник Тень',b:'ten'},{l:'Кабинет 219',b:'tikh'},{l:'Хватит, в комитет',end:true}]},
+    {w:'murlykin', x:'Видишь, Женя? В нормальной стране к депутату приходят спорить. У нас приходят проверить, что ты не собираешься.', cap:'ПРОВЕРКА'} ],
+   blocks:{
+    seifov:[{w:'seifov', x:'Аристарх Сейфов, Первый Пушистый банк. Я пришёл не просить. Я пришёл сказать спасибо — заранее.', cap:'СПАСИБО'},{w:'seifov', x:'Единый реестр, понимаете? Кредит с низким индексом — под сорок процентов. Это не репрессии. Это риск-менеджмент.'},{w:'pushnin', x:'А если я буду против?'},{w:'seifov', x:'Тогда, Евгений Аркадьевич, ваша ипотека станет очень интересной.', ev:'ev_bank'}],
+    ten:[{w:'ten', x:'Полковник Тень. Должность не скажу. Фамилию вы и так знаете неправильно.', cap:'ТЕНЬ'},{w:'ten', x:'Статья третья: признаки беспокойства определяет ведомство. Наше. Перечень уже готов, сто двенадцать пунктов.', ev:'ev_list'},{w:'pushnin', x:'А пункт сто тринадцатый?'},{w:'ten', x:'Будет. Мы открыты к предложениям граждан.'}],
+    tikh:[{w:'narr', x:'Кабинет 219. Здесь работала правозащитница Вера Тихонова. На двери — светлый прямоугольник: табличку сняли этой ночью.', cap:'219'},{w:'narr', x:'Внутри пусто. На столе — кружка с недопитым чаем. Ещё тёплая.'},{w:'pushnin', x:'Куда она делась? — спрашиваю у охранника. — Кто? — переспрашивает он. — Тут никто не работал.', ev:'ev_tikh'}] },
+   visuals:'Коридор с портретами на стенах.', anim:'Переход: лифт на этаж комитетов.', interaction:'Выбор собеседника.',
+   facts:[], interp:[], fiction:['Все персонажи вымышлены.'],
+   hot:[{x:46,y:110,w:64,h:56,label:'Сейфов',a:{t:'char',c:'seifov'}},{x:276,y:110,w:64,h:56,label:'Тень',a:{t:'char',c:'ten'}}], out:{type:'descent',f:[192,108],d:'Служебный лифт вниз.'}, next:'s05' },
+
+ { id:'s05', title:'Четыре минуты', ts:{d:1,t:'11:00',k:'fic'}, loc:'Комитет по безопасности и спокойствию', bg:'committee', fg:'committeeFg', fx:['timer'], sat:.7, cap:'4:00',
+   actors:[{c:'clerk1',x:40,y:100},{c:'sherstobit',x:162,y:94},{c:'clerk2',x:282,y:100}], camera:'Над столом комитета, таймер на стене.',
+   lines:[
+    {w:'narr', x:'Комитет по безопасности и спокойствию. Раньше на законопроект отводили тридцать дней. Сегодня — четыре минуты. Таймер уже идёт.', cap:'4:00'},
+    {w:'sherstobit', x:'Председатель Шерстобит. Коллеги, поступил проект. Замечания есть? Замечаний нет. Поправки есть? Поправок нет.', cap:'НЕТ'},
+    {w:'pushnin', x:'Есть. Я вчера подал поправку: удалять данные только по решению суда.'},
+    {w:'sherstobit', x:'Ваша поправка не поступала.', ev:'ev_amend', choices:[{l:'Показать квитанцию о подаче',b:'receipt',calm:-6},{l:'Промолчать',b:'silent',calm:1}], single:true},
+    {w:'sherstobit', x:'Рекомендовать к принятию в трёх чтениях сегодня. Единогласно. Все свободны. Три минуты сорок секунд — рекорд.', cap:'РЕКОРД'} ],
+   blocks:{
+    receipt:[{w:'pushnin', x:'Вот квитанция. Входящий номер, дата, подпись секретаря.'},{w:'sherstobit', x:'Квитанция есть. Поправки нет. Так бывает, Евгений Аркадьевич. Бумага — вещь непрочная.', cap:'НЕ ПОСТУПАЛА'},{w:'narr', x:'Квитанцию забирают «для приобщения к делу». К какому делу — не уточняют. Индекс спокойствия: −6.'}],
+    silent:[{w:'pushnin', x:'…Вопросов нет.'},{w:'narr', x:'Шерстобит одобрительно кивает. Индекс спокойствия: +1. Впервые в жизни молчание вам что-то принесло.'}] },
+   visuals:'Комитет из «Кошачьей Думы»; на стене — красный таймер.', anim:'Таймер отсчитывает 4:00 → 0:00 (в 4 раза быстрее реального времени).', interaction:'Один выбор.',
+   facts:[], interp:[], fiction:['Комитет и регламент вымышлены.'],
+   hot:[], out:{type:'walk',f:[192,90],d:'К двери фракционной комнаты.'}, next:'s06' },
+
+ { id:'s06', title:'Фракция', ts:{d:1,t:'12:00',k:'fic'}, loc:'Фракционная комната «Единой Миски»', bg:'boardroom', fg:'boardroomFg', fx:[], sat:.62, cap:'ЕДИНАЯ МИСКА',
+   actors:[{c:'kogtev',x:162,y:110},{c:'murlykin',x:40,y:110},{c:'pushnin',x:290,y:110}], camera:'Тёмная комната, на стене графики рейтингов.',
+   lines:[
+    {w:'narr', x:'Фракция «Единая Миска». В ней четыреста двадцать депутатов. В Палате — четыреста пятьдесят. Остальные тридцать — «конструктивная оппозиция».', cap:'ЕДИНАЯ МИСКА'},
+    {w:'kogtev', x:'Аркадий Когтев, Глава Аппарата. Я не депутат и не член фракции. Но собрание веду я — так удобнее всем.', cap:'АППАРАТ'},
+    {w:'kogtev', x:'Перед вами заявления о добровольном сложении полномочий. Подписаны вашими подписями. Дата не проставлена. Это формальность, коллеги. Чтобы у всех было спокойно на душе.', cap:'ДАТА ОТКРЫТА', ev:'ev_resign'},
+    {w:'pushnin', x:'Подпись моя. Я этого не подписывал. Хотя почерк очень похож.'},
+    {w:'murlykin', x:'Тихо, Женя. У меня таких три. С разных лет. Одно ещё с прошлой Конституции.'},
+    {w:'kogtev', x:'Голосуем «за», единогласно. Кто хочет против — может проголосовать против. Мы же не звери.', choices:[{l:'Спросить про статью 5',b:'q5',calm:-8},{l:'Аплодировать вместе со всеми',b:'clap',calm:3},{l:'Выйти покурить',b:'smoke'},{l:'Дальше',end:true}]} ],
+   blocks:{
+    q5:[{w:'pushnin', x:'А статья пятая? Мы же приостанавливаем сами себя.'},{w:'kogtev', x:'Вы не приостанавливаете себя, Евгений Аркадьевич. Вы просто будете меньше работать. Разве не об этом мечтает каждый депутат?', cap:'ОТДЫХ'},{w:'narr', x:'Смех в зале. Когтев что-то записывает в блокнот. Индекс спокойствия: −8.'}],
+    clap:[{w:'narr', x:'Вы аплодируете. Аплодисменты длятся четыре минуты — столько же, сколько заседание комитета. Первым перестать не хочет никто. Индекс: +3.', cap:'АПЛОДИСМЕНТЫ'}],
+    smoke:[{w:'narr', x:'Курилка. Там уже стоят трое из фракции. Курят ровно, молча, не глядя друг на друга.'},{w:'murlykin', x:'Знаешь, почему в курилке нет камер? — шепчет Мурлыкин. — Потому что они в зажигалках.'}] },
+   visuals:'Тёмная комната с пробковой доской графиков.', anim:'Переход: тоннель в коридор.', interaction:'Реакция на собрание.',
+   facts:[], interp:[], fiction:['Фракция, заявления и Аппарат вымышлены.'],
+   hot:[{x:162,y:110,w:64,h:56,label:'Когтев',a:{t:'char',c:'kogtev'},},{x:150,y:182,w:120,h:10,label:'Заявление',a:{t:'doc',d:'resign',ev:'ev_resign'}}], out:{type:'tunnel',f:[192,100],d:'Пиксельный тоннель в коридор.'}, next:'s07' },
+
+ { id:'s07', title:'Беседа', ts:{d:1,t:'13:30',k:'fic'}, loc:'Коридор', bg:'corridor', fx:['portraits'], sat:.55, cap:'ОППОЗИЦИЯ',
+   actors:[{c:'grey1',x:20,y:110},{c:'dvorovy',x:162,y:110},{c:'grey2',x:304,y:110}], camera:'Коридор; по краям — двое в сером.',
+   lines:[
+    {w:'dvorovy', x:'Тихон Дворовый, «Дворовый фронт». Нас называют конструктивной оппозицией. Пока мы конструктивны.', cap:'ОППОЗИЦИЯ'},
+    {w:'dvorovy', x:'Пушнин, нас тридцать. Если хотя бы двадцать человек из вашей фракции нажмут «против», две трети не набираются. Статья пятая не пройдёт.'},
+    {w:'pushnin', x:'Двадцать человек из «Единой Миски»? Тихон, ты где их видел? Покажи хоть одного.'},
+    {w:'dvorovy', x:'Ты — один. Начни с себя.'},
+    {w:'narr', x:'Из-за угла выходят двое в одинаковых серых костюмах.', cap:'СЕРЫЕ'},
+    {w:'grey1', x:'Депутат Дворовый? Пройдёмте на беседу. Ненадолго. Это формальность.', choices:[{l:'Заступиться',b:'defend',calm:-12,set:{defended:1}},{l:'Отвернуться к портрету',b:'away'}], single:true},
+    {w:'murlykin', x:'Беседы бывают короткие и длинные. Тихон — человек разговорчивый.', cap:'БЕСЕДА', ev:'ev_dvor'} ],
+   blocks:{
+    defend:[{w:'pushnin', x:'Стойте! У него депутатская неприкосновенность!'},{w:'grey2', x:'Конечно. Мы её не трогаем. Мы трогаем только депутата.', cap:'НЕПРИКОСНОВЕННОСТЬ'},{w:'narr', x:'Его уводят. Вас записывают. Индекс спокойствия: −12. Телефон вибрирует так долго, что нагревается.'}],
+    away:[{w:'narr', x:'Вы смотрите на портрет. Портрет смотрит на вас. Мурлыкин был прав.'},{w:'narr', x:'Когда вы оборачиваетесь, коридор пуст. На стене — светлый прямоугольник: там висела табличка «Фракция „Дворовый фронт“».'}] },
+   visuals:'Коридор; двое в сером по краям, Дворовый в центре.', anim:'Переход: шаги к залу.', interaction:'Один выбор.',
+   facts:[{t:'Параллель: в марте 1933 г. все 81 депутат-коммунист и 26 социал-демократов были не допущены к заседанию и задержаны перед голосованием о чрезвычайных полномочиях.', src:['ushEnable']}], interp:[], fiction:['Персонажи вымышлены.'],
+   hot:[{x:162,y:110,w:64,h:56,label:'Дворовый',a:{t:'char',c:'dvorovy'}}], out:{type:'walk',f:[192,108],d:'Шаги к дверям зала.'}, next:'s08' },
+
+ { id:'s08', title:'Три чтения за утро', ts:{d:1,t:'14:00',k:'fic'}, loc:'Пленарный зал', bg:'hall', fg:'hallFg', fx:['screens','hallclock','banner'], sat:.5, cap:'ЗАЛ',
+   actors:[{c:'speaker',x:174,y:70,s:1},{c:'murlykin',x:24,y:104},{c:'pushnin',x:300,y:104}], camera:'С места в зале, вид на трибуну.',
+   lines:[
+    {w:'narr', x:'Пленарный зал. Над президиумом — новые знамёна. На знамёнах — тот же портрет.', cap:'ЗАЛ'},
+    {w:'speaker', x:'Председатель Пушистая-Мягкова. Первое чтение. Вопросы? Вопросов нет. Принято.', cap:'ПЕРВОЕ'},
+    {w:'speaker', x:'Второе чтение. Поправки? Поправки не поступали. Принято.', cap:'ВТОРОЕ'},
+    {w:'pushnin', x:'Дворового в зале нет. А его фамилия светится на экране в списке присутствующих.'},
+    {w:'murlykin', x:'У нас кворум не по головам, Женя. У нас кворум по карточкам. Карточки голосуют прекрасно.', cap:'КВОРУМ', ev:'p_enable'},
+    {w:'speaker', x:'Третье чтение. Обсуждение регламентом не предусмотрено: регламент изменён сегодня утром. Переходим к голосованию.', cap:'ТРЕТЬЕ'},
+    {w:'narr', x:'Девять минут, три чтения. Где-то за стеной Тихон Дворовый ведёт длинную беседу.'} ],
+   visuals:'Зал из «Кошачьей Думы», красные знамёна с портретом.', anim:'Переход: фокус на кнопке, всё остальное распадается на пиксели.', interaction:'—',
+   facts:[{t:'Параллель: 23 марта 1933 г. закон о чрезвычайных полномочиях приняли 444 голосами против 94; кворум пересчитали, не учитывая отсутствующих депутатов-коммунистов; в зале и вокруг стояли штурмовики СА.', src:['wikiEnable','ushEnable']}], interp:[], fiction:['Палата и регламент вымышлены.'],
+   hot:[], out:{type:'focus',f:[192,40],d:'Фокус на табло.'}, next:'s09' },
+
+ { id:'s09', title:'Кнопка', ts:{d:1,t:'14:12',k:'fic'}, loc:'Табло голосования', bg:'board', fx:['score'], score:[450,0,0,0], sat:.45, cap:'КНОПКА',
+   actors:[], camera:'Крупно табло.',
+   lines:[
+    {w:'narr', x:'Голосование. Перед вами три кнопки. В лапе — депутатская карточка номер 212.', cap:'КНОПКА'},
+    {w:'narr', x:'Что нажимаете?', choices:[{l:'«За»',b:'za',set:{vote:'za'}},{l:'«Против»',b:'protiv',set:{vote:'protiv'}},{l:'«Воздержался»',b:'vozd',set:{vote:'vozd'}},{l:'Вынуть карточку и не голосовать',b:'none',set:{vote:'none'}}], single:true},
+    {w:'narr', x:'Табло.', ui:'votes', sfx:'vote', cap:'450'},
+    {w:'narr', x:'За — 450. Против — 0. Воздержались — 0. Не голосовали — 0.', ev:'ev_450'},
+    {branch:'vote'},
+    {w:'murlykin', x:'Четыреста пятьдесят. Включая Дворового, который на беседе, и Сенькина, который полгода в больнице.', cap:'ЕДИНОГЛАСНО', ev:'p_singing'} ],
+   blocks:{
+    za:[{w:'pushnin', x:'Нажимаю «за». Палец не дрожит. Это хуже всего.'}],
+    protiv:[{w:'pushnin', x:'Нажимаю «против». Кнопка тугая, как будто ей редко пользуются.'}],
+    vozd:[{w:'pushnin', x:'«Воздержался». Самая честная кнопка для тех, у кого кончилась храбрость.'}],
+    none:[{w:'pushnin', x:'Вынимаю карточку из гнезда. Пусть хоть так.'}],
+    'vote:za':[{w:'pushnin', x:'Моё «за» тоже там. Ни один голос не потерялся. А ощущение, что мой ничего не значил.'}],
+    'vote:protiv':[{w:'pushnin', x:'Я нажал «против». На табло — ноль. Мой голос посчитали «за», как будто кнопки нужны для красоты.', cap:'0'}],
+    'vote:vozd':[{w:'pushnin', x:'Воздержавшихся — ноль. Система воздержалась от того, чтобы меня услышать.'}],
+    'vote:none':[{w:'pushnin', x:'Карточка у меня в лапе. А мой голос — на табло. Оказывается, голосую не я. Голосует карточка номер 212, и у неё своё мнение.'}] },
+   visuals:'Тёмное табло, цифры набегают до 450.', anim:'Цифры растут 2,4 с, затем мигает рамка. Переход: световой тоннель вверх.', interaction:'Выбор кнопки. Результат не меняется.',
+   facts:[{t:'Параллель: после 1933 г. Рейхстаг голосовал единогласно, собирался редко (20 раз за 1933–1942 гг.) и получил прозвище «самый дорогой певческий клуб Германии».', src:['wikiReich']}], interp:['Единогласие — не признак согласия, а признак того, что несогласие невозможно.'], fiction:['Подмена голосов в Палате — сюжетный приём.'],
+   hot:[], out:{type:'ascent',f:[192,108],d:'Тоннель вверх.'}, next:'s10' },
+
+ { id:'s10', title:'Один звонок', ts:{d:1,t:'15:00',k:'fic'}, loc:'Совет Регионов', bg:'council', fg:'councilFg', fx:[], sat:.4, cap:'1 ЗВОНОК',
+   actors:[{c:'senator',x:162,y:94}], camera:'Ось зала, сенатор у трибуны.',
+   lines:[
+    {w:'narr', x:'Совет Регионов, верхняя палата. По Конституции у него четырнадцать дней. Сегодня хватило одного звонка.', cap:'1 ЗВОНОК'},
+    {w:'senator', x:'Сенатор Невскуров. Алло. Да. Да. Конечно. Одобрено. — Это было заседание.', cap:'ОДОБРЕНО'},
+    {w:'senator', x:'Не смотрите так, молодой человек. Мы не одобряем законы. Мы одобряем то, что их уже одобрили.'},
+    {w:'narr', x:'Журнал заседания заполнен заранее. Время одобрения — 14:58. Звонок был в 15:00.', ev:'ev_phone', cap:'14:58'} ],
+   visuals:'Сине-белый зал, пустые кресла.', anim:'Переход: шаги к двери кабинета.', interaction:'—',
+   facts:[], interp:[], fiction:['Совет Регионов вымышлен.'],
+   hot:[{x:162,y:94,w:64,h:50,label:'Невскуров',a:{t:'char',c:'senator'}}], out:{type:'walk',f:[192,100],d:'Тяжёлая дверь.'}, next:'s11' },
+
+ { id:'s11', title:'Сухие чернила', ts:{d:1,t:'16:00',k:'fic'}, loc:'Кабинет Верховного Кота', bg:'cabinet', fg:'cabinetFg', fx:['cabclock'], sat:.35, cap:'КАБИНЕТ',
+   actors:[{c:'verkhovny',x:160,y:76}], camera:'Через стол; фигура в тени.',
+   lines:[
+    {w:'narr', x:'Кабинет Верховного Кота. Вас пустили вместе с делегацией — сфотографироваться на фоне исторического момента.', cap:'КАБИНЕТ'},
+    {w:'kogtev', x:'Верховный Кот подписывает. Улыбаемся. Не моргаем. По возможности не дышим.'},
+    {w:'narr', x:'Вы смотрите на документ. Подпись уже стоит. Не свежая: чернила давно высохли.', ev:'ev_sign', cap:'ПОДПИСЬ'},
+    {w:'pushnin', x:'Он подписал раньше, чем мы проголосовали?'},
+    {w:'kogtev', x:'Верховный Кот всегда на шаг впереди, Евгений Аркадьевич. Это называется стратегическое видение.'},
+    {w:'narr', x:'А Конституционный суд? Указ о его «реорганизации» висит на стене в рамке. Номер указа — на единицу меньше номера закона.', ev:'ev_court'},
+    {w:'verkhovny', x:'Спокойствие — это когда никто не задаёт вопросов. Спасибо, депутаты.', cap:'СПОКОЙСТВИЕ'} ],
+   visuals:'Кабинет: окно с башнями, флаг, лампа, документ на столе.', anim:'Переход: фокус на подписи.', interaction:'Клик по документу — указ о суде.',
+   facts:[{t:'Параллель: закон 1933 г. позволил правительству Германии издавать законы без парламента, в том числе отступающие от Веймарской конституции.', src:['ushEnable']}], interp:[], fiction:['Верховный Кот — вымышленный образ, не изображает реальное лицо.'],
+   hot:[{x:168,y:122,w:48,h:12,label:'Указ о суде',a:{t:'doc',d:'court',ev:'ev_court'}}], out:{type:'focus',f:[192,128],d:'Вспышка фотоаппарата.'}, next:'s12' },
+
+ { id:'s12', title:'Эфир', ts:{d:1,t:'21:00',k:'fic'}, loc:'Студия «Вестей Спокойствия»', bg:'print', fx:['tvticker'], sat:.3, cap:'ЭФИР',
+   actors:[{c:'glasha',x:216,y:110},{c:'pushnin',x:300,y:110}], camera:'Студия, экран за спиной ведущей.',
+   lines:[
+    {w:'narr', x:'Вечерний эфир Первого Пушистого. Вас пригласили прокомментировать исторический день.', cap:'ЭФИР'},
+    {w:'glasha', x:'Глафира Эфирова, «Вести Спокойствия». Евгений Аркадьевич, как вы оцениваете закон? Говорите что хотите — эфир не прямой.', cap:'НЕ ПРЯМОЙ', choices:[{l:'«Это конец парламента»',b:'end',calm:-10,set:{iv:'end'}},{l:'«Мне нечего сказать»',b:'nothing',set:{iv:'nothing'}},{l:'«Это важный закон»',b:'important',calm:4,set:{iv:'important'}}], single:true},
+    {w:'narr', x:'Через час — выпуск новостей. Ваш комментарий в эфире:'},
+    {w:'tv', x:'«Депутат Пушнин: это исторический закон. Мы проголосовали единогласно, с чувством глубокой ответственности».', cap:'МОНТАЖ', ev:'ev_edit'},
+    {branch:'iv'},
+    {w:'glasha', x:'Не обижайтесь. У нас не врут. У нас монтируют.', cap:'МОНТИРУЮТ'} ],
+   blocks:{
+    end:[{w:'pushnin', x:'Это конец парламента. Мы проголосовали за то, чтобы больше не голосовать.'}],
+    nothing:[{w:'pushnin', x:'Мне нечего сказать.'}],
+    important:[{w:'pushnin', x:'Это… важный закон. Для страны.'}],
+    'iv:end':[{w:'pushnin', x:'Из моих слов оставили «мы проголосовали». Остальное, видимо, не влезло в хронометраж.'}],
+    'iv:nothing':[{w:'pushnin', x:'Я сказал, что мне нечего сказать. Монтажёр нашёл, что сказать за меня.'}],
+    'iv:important':[{w:'pushnin', x:'Я сказал «важный». Они добавили «исторический» и «единогласно». Даже спорить не с чем: всё правда.'}] },
+   visuals:'Студия: аппаратная слева, экран эфира с бегущей строкой справа.', anim:'Бегущая строка, индикатор эфира. Переход: погружение в экран.', interaction:'Любой ответ превращается в одну и ту же цитату.',
+   facts:[], interp:[], fiction:['Канал и ведущая вымышлены.'],
+   hot:[{x:216,y:110,w:64,h:56,label:'Эфирова',a:{t:'char',c:'glasha'}}], out:{type:'docdive',f:[286,80],d:'Камера ныряет в экран и выходит во двор.'}, next:'s13' },
+
+ { id:'s13', title:'Двор', ts:{d:30,t:'18:00',k:'fic'}, loc:'Двор дома Пушнина', bg:'yard_ev', fx:['cams','leaves'], sat:.3, cap:'+30 ДНЕЙ',
+   actors:[{c:'n1',x:296,y:120,s:1},{c:'n2',x:326,y:120,s:1},{c:'barsik',x:120,y:110},{c:'pushnin',x:200,y:110}], camera:'Двор, камеры на столбах.',
+   lines:[
+    {w:'narr', x:'Месяц спустя. Двор дома Пушнина. На каждом столбе — камера. Над подъездами — табло с индексами жильцов.', cap:'+30 ДНЕЙ'},
+    {w:'barsik', x:'Барсик, сосед с третьего. Евгений Аркадьич, вы не подумайте, я на Петровых сообщил не со зла. У меня индекс был сорок два, а теперь пятьдесят пять. Ипотеку одобрили!', cap:'55'},
+    {w:'pushnin', x:'А Петровы?'},
+    {w:'barsik', x:'А что Петровы. Съехали. Говорят, к родственникам. Говорят, далеко.'},
+    {w:'barsik', x:'Система простая: сообщаешь — плюс, молчишь — минус. Можно и на себя сообщить, если совсем припекло. Явка с повинной — плюс десять.', ev:'p_stasi', choices:[{l:'Сообщить на Барсика',b:'report',calm:8,set:{reported:1}},{l:'Ни на кого не сообщать',b:'no',calm:-4}], single:true},
+    {w:'narr', x:'Камера на столбе медленно поворачивается к вам. Светодиод мигает: запись идёт.', cap:'ЗАПИСЬ'} ],
+   blocks:{
+    report:[{w:'narr', x:'Вы открываете приложение. Кнопка «Сообщить о беспокойстве» — самая большая на экране. Индекс: +8.', cap:'+8'},{w:'narr', x:'Барсик улыбается и машет лапой. Через неделю он съедет к родственникам.'}],
+    no:[{w:'narr', x:'Вы убираете телефон. Индекс: −4 за «недостаточную бдительность».'},{w:'narr', x:'Барсик сочувственно хлопает вас по плечу. И что-то записывает.'}] },
+   visuals:'Двор в закатном свете, камеры на столбах.', anim:'Камеры поворачиваются, светодиоды мигают. Переход: время вперёд.', interaction:'Один выбор.',
+   facts:[{t:'Параллель: в 1989 г. у МГБ ГДР (Штази) было около 189 000 неофициальных сотрудников — примерно один на 90 граждан; они сообщали о коллегах, друзьях и соседях.', src:['stasi']}], interp:[], fiction:['Двор и соседи вымышлены.'],
+   hot:[{x:120,y:110,w:64,h:56,label:'Барсик',a:{t:'char',c:'barsik'}}], out:{type:'time',f:[192,60],dir:1,d:'Время вперёд.'}, next:'s14' },
+
+ { id:'s14', title:'Письмо', ts:{d:40,t:'08:00',k:'fic'}, loc:'Кабинет 212', bg:'office', fg:'officeFg', fx:['portraits'], sat:.25, cap:'ПИСЬМО',
+   actors:[{c:'pushnin',x:150,y:96}], camera:'Кабинет, экран ноутбука.',
+   lines:[
+    {w:'narr', x:'Кабинет 212. Утро. На экране — письмо без обратного адреса.', cap:'ПИСЬМО'},
+    {branch:'vote'},
+    {w:'narr', x:'Индекс спокойствия: −20. Выезд за пределы столицы для вас закрыт.', calm:-20, cap:'−20'},
+    {w:'pushnin', x:'Я депутат. У меня есть право на запрос. Напишу жалобу.'} ],
+   blocks:{
+    'vote:za':[{w:'narr', x:'«Ваш индекс снижен на 20 пунктов. Основание: публикация 2014 года с признаками беспокойства (пункт 87 перечня)».'},{w:'pushnin', x:'2014 год? Я тогда написал, что в столовой Палаты невкусные котлеты.', cap:'КОТЛЕТЫ'}],
+    'vote:protiv':[{w:'narr', x:'«Ваш индекс снижен на 20 пунктов. Основание: голосование „против“, зафиксированное системой».'},{w:'pushnin', x:'Система записала, что я нажал «против». И она же посчитала мой голос «за». У неё два мнения обо мне, и оба плохие.', cap:'ЗАПИСАНО'}],
+    'vote:vozd':[{w:'narr', x:'«Ваш индекс снижен на 20 пунктов. Основание: воздержание, приравненное к беспокойству (пункт 3 перечня)».'},{w:'pushnin', x:'Воздержаться тоже нельзя. Можно только держаться.'}],
+    'vote:none':[{w:'narr', x:'«Ваш индекс снижен на 20 пунктов. Основание: извлечение карточки во время голосования».'},{w:'pushnin', x:'Они видели, как я вынул карточку. И всё равно засчитали мой голос. И им не стыдно.'}] },
+   visuals:'Кабинет, совсем бесцветный.', anim:'Переход: шаги к двери.', interaction:'Письмо зависит от вашего голоса.',
+   facts:[], interp:[], fiction:['Письмо вымышлено.'],
+   hot:[], out:{type:'walk',f:[192,108],d:'Шаги в коридор.'}, next:'s15' },
+
+ { id:'s15', title:'Жалоба', ts:{d:45,t:'11:00',k:'fic'}, loc:'Коридор Ведомства спокойствия', bg:'corridor', fx:['portraits','cams'], sat:.2, cap:'ЖАЛОБА',
+   actors:[{c:'ten',x:162,y:110}], camera:'Коридор, Тень в центре.',
+   lines:[
+    {w:'narr', x:'Жалоба по новому порядку подаётся в ведомство, определённое статьёй третьей. То есть туда, на кого жалуешься.', cap:'ЖАЛОБА'},
+    {w:'ten', x:'Полковник Тень. Вашу жалобу мы рассмотрели. Быстро, как видите: за сорок минут.'},
+    {w:'ten', x:'Нарушений не выявлено. Индекс снижен ещё на пять пунктов — за жалобу, содержащую признаки беспокойства.', calm:-5, cap:'−5'},
+    {w:'pushnin', x:'То есть жаловаться на беспокойство — это беспокойство?'},
+    {w:'ten', x:'Вы схватываете на лету, Евгений Аркадьевич. В вашем возрасте это редкость.'},
+    {w:'ten', x:'И совет: не пишите больше. Бумага — вещь непрочная. А люди ещё непрочнее.', cap:'НЕПРОЧНЫЕ'} ],
+   visuals:'Коридор с портретами и камерами.', anim:'Переход: лифт вниз.', interaction:'—',
+   facts:[], interp:[], fiction:['Ведомство и порядок жалоб вымышлены.'],
+   hot:[{x:162,y:110,w:64,h:56,label:'Тень',a:{t:'char',c:'ten'}}], out:{type:'descent',f:[192,108],d:'Лифт вниз.'}, next:'s16' },
+
+ { id:'s16', title:'Особая тишина', ts:{d:60,t:'12:00',k:'fic'}, loc:'Пленарный зал', bg:'hall', fg:'hallFg', fx:['screens','banner','lightsout'], sat:.15, cap:'+60 ДНЕЙ',
+   actors:[{c:'speaker',x:174,y:70,s:1},{c:'murlykin',x:24,y:104},{c:'pushnin',x:300,y:104}], camera:'Зал; свет гаснет рядами.',
+   lines:[
+    {w:'narr', x:'Два месяца спустя. Внеочередное заседание. Заняты все четыреста пятьдесят мест — головами или карточками.', cap:'+60 ДНЕЙ'},
+    {w:'speaker', x:'Зачитываю указ Верховного Кота. По статье пятой закона о тишине объявляется период особой тишины. Действие закона о Палате Депутатов приостанавливается.', cap:'ОСОБАЯ ТИШИНА'},
+    {w:'speaker', x:'Благодарю вас, коллеги. Вы хорошо поработали. Вы свободны. Насовсем.'},
+    {w:'narr', x:'Свет в зале гаснет ряд за рядом. Начинают с задних.'},
+    {w:'murlykin', x:'Третий раз в жизни вижу, как гасят этот зал. Первые два раза его потом включали. Правда, для других людей.', cap:'ТРЕТИЙ РАЗ'},
+    {w:'pushnin', x:'Мы проголосовали за собственную отмену. Четыреста пятьдесят — ноль.'} ],
+   visuals:'Тот же зал, свет гаснет снизу вверх.', anim:'Затемнение рядов 14 с. Переход: тоннель в архив.', interaction:'—',
+   facts:[{t:'Параллель: в 1933–1939 гг. Рейхстаг принял лишь четыре закона; закон о чрезвычайных полномочиях продлевали в 1937 и 1941 гг.', src:['wikiReich']}], interp:[], fiction:['Указ и Палата вымышлены.'],
+   hot:[], out:{type:'tunnel',f:[192,100],d:'Тоннель в архив.'}, next:'s17' },
+
+ { id:'s17', title:'Архив', ts:{d:61,t:'23:00',k:'fic'}, loc:'Восстановленный Центральный архив', bg:'archive', fx:['dust'], sat:.25, cap:'АРХИВ',
+   actors:[{c:'murlykin',x:120,y:112},{c:'pushnin',x:200,y:112}], camera:'Стеллажи уходят в темноту.',
+   lines:[
+    {w:'narr', x:'Центральный архив. Его восстановили за два месяца — быстрее, чем любое здание в истории страны.', cap:'АРХИВ'},
+    {w:'murlykin', x:'Пойдём, покажу кое-что. Меня сюда пускают по старой памяти. Пока память не приостановили.'},
+    {w:'narr', x:'Мурлыкин достаёт тот самый конверт. На обороте — штамп типографии Аппарата.', ev:'ev_stamp', ui:'stamp'},
+    {w:'pushnin', x:'Дата печати… за двадцать один день до пожара.', cap:'−21 ДЕНЬ', sfx:'twist'},
+    {w:'murlykin', x:'Закон о тишине напечатали за три недели до того, как появился повод его принять. Поджигателей так и не нашли. Зато их личности установили той же ночью.'},
+    {w:'pushnin', x:'Значит, пожар был…'},
+    {w:'murlykin', x:'Тише, Женя. Тихий час. Я не знаю, кто поджёг архив. Я знаю, кто знал, что он загорится. Это разные вещи — и в суде, и в истории.', cap:'НЕ ЗНАЮ'} ],
+   visuals:'Архив из «Кошачьей Думы», холодный свет.', anim:'Пыль. Переход: перемотка.', interaction:'Клик по стеллажам — оборот конверта.',
+   facts:[{t:'Параллель: кто поджёг Рейхстаг в 1933 г., до сих пор спорят историки; Энциклопедия Холокоста пишет, что происхождение пожара не прояснено. Но выгоду из него извлекли немедленно.', src:['ushFire']}], interp:['Повод и подготовленный закон могут совпасть во времени; совпадение — не доказательство поджога.'], fiction:['Штамп и дата вымышлены.'],
+   hot:[{x:0,y:20,w:140,h:170,label:'Оборот конверта',a:{t:'doc',d:'stamp',ev:'ev_stamp'}}], out:{type:'rewind',f:[192,108],d:'Перемотка.'}, next:'s18' },
+
+ { id:'s18', title:'Тихий час', ts:{d:62,t:'00:00',k:'fic'}, loc:'Столица ночью', bg:'final', fx:['nightcity'], sat:.0, cap:'ТИХИЙ ЧАС',
+   actors:[], camera:'Неподвижный кадр города.',
+   lines:[
+    {w:'narr', x:'Столица. Ночь. Окна гаснут одно за другим. Сами, без приказа. Так спокойнее.', cap:'ТИХИЙ ЧАС', sfx:'close'},
+    {branch:'vote'},
+    {w:'narr', x:'Какую бы кнопку вы ни нажали, закон получился один и тот же. Это не баг. Это и есть устройство.', cap:'ОДИН ИТОГ', ui:'compare10'},
+    {w:'murlykin', x:'Запомни разницу, Женя. Где голос можно проиграть — там политика. Где его нельзя даже потерять — там декорация.', cap:'ДЕКОРАЦИЯ'},
+    {w:'narr', x:'Конец. В архиве — исторические параллели и источники.', ui:'final'} ],
+   blocks:{
+    'vote:za':[{w:'narr', x:'Евгений Пушнин голосовал «за». Его индекс — 41. Ему разрешили работать в архиве: раскладывать документы, которые больше никто не читает.'}],
+    'vote:protiv':[{w:'narr', x:'Евгений Пушнин голосовал «против», но голос посчитали «за». Его индекс — 29. Он живёт по тому же адресу и никуда не выходит.'}],
+    'vote:vozd':[{w:'narr', x:'Евгений Пушнин воздержался. Его индекс — 33. Он научился не держаться за слова и не воздерживаться от аплодисментов.'}],
+    'vote:none':[{w:'narr', x:'Евгений Пушнин вынул карточку. Карточка проголосовала без него. Его индекс — 30. Говорят, карточка № 212 до сих пор работает где-то в Аппарате.'}] },
+   visuals:'Ночной город, окна гаснут.', anim:'0–10 с: окна гаснут по одному.', interaction:'Финальные кнопки.',
+   facts:[], interp:[], fiction:['Эпилоги вымышлены.'],
+   hot:[], out:{type:'rewind',f:[192,108],d:'—'}, next:null }
+];
+
+/* ================= ВРЕМЕННАЯ ШКАЛА: реальные события ================= */
+const REAL_EVENTS = [
+  ['27.02.1933', 'Пожар Рейхстага; вину возлагают на коммунистов', 'ushFire'],
+  ['28.02.1933', 'Указ «О защите народа и государства» приостанавливает свободу слова, печати и собраний', 'ushFire'],
+  ['23.03.1933', 'Закон о чрезвычайных полномочиях: 444 «за», 94 «против»', 'wikiEnable'],
+  ['1933–1942', 'Рейхстаг собирается 20 раз и голосует единогласно', 'wikiReich'],
+  ['1989', 'У Штази около 189 000 неофициальных сотрудников', 'stasi'],
+  ['2022', 'MERICS: единого «социального рейтинга» граждан в Китае не существует', 'merics']
+];
+
+</script>
+<script>
+/* ================= TELEGRAM MINI APP ================= */
+const TG = (window.Telegram && window.Telegram.WebApp) || null;
+const inTG = !!(TG && TG.platform && TG.platform !== 'unknown');
+const tgv = (v) => { try { return !!(inTG && TG.isVersionAtLeast(v)); } catch (e) { return false; } };
+const hap = {
+  tap() { try { if (tgv('6.1')) TG.HapticFeedback.selectionChanged(); } catch (e) {} },
+  hit(s) { try { if (tgv('6.1')) TG.HapticFeedback.impactOccurred(s || 'light'); } catch (e) {} },
+  note(t) { try { if (tgv('6.1')) TG.HapticFeedback.notificationOccurred(t); } catch (e) {} }
+};
+function tgBack(show) { try { if (tgv('6.1')) show ? TG.BackButton.show() : TG.BackButton.hide(); } catch (e) {} }
+if (inTG) { try {
+  TG.ready(); TG.expand();
+  if (tgv('7.7')) TG.disableVerticalSwipes();
+  if (tgv('6.1')) { TG.setHeaderColor('#0e0d12'); TG.setBackgroundColor('#0e0d12'); TG.BackButton.onClick(() => { if (!document.getElementById('modal').hidden) closeModal(); }); }
+  if (tgv('7.10')) TG.setBottomBarColor('#09080d');
+  TG.onEvent('viewportChanged', () => fit());
+  if (tgv('8.0')) ['fullscreenChanged', 'safeAreaChanged', 'contentSafeAreaChanged'].forEach(ev => TG.onEvent(ev, () => fit()));
+} catch (e) {} }
+const SAVE_KEY = 'tihiy_save_v1';
+let saveT = 0;
+function saveProgress(now) {
+  const st = { v: 1, i: S.i, pos: S.saved ? S.saved.pos : S.pos, ev: [...S.ev], visited: [...S.visited], hist: S.hist.slice(-40), asked: S.asked, calm: S.calm, flags: S.flags, applied: S.applied };
+  let s = JSON.stringify(st); if (s.length > 4000) { st.applied = {}; st.hist = st.hist.slice(-10); s = JSON.stringify(st); }
+  try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
+  clearTimeout(saveT); saveT = setTimeout(() => { try { if (tgv('6.9')) TG.CloudStorage.setItem(SAVE_KEY, s); } catch (e) {} }, now ? 0 : 1500);
+}
+function clearProgress() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} try { if (tgv('6.9')) TG.CloudStorage.removeItem(SAVE_KEY); } catch (e) {} }
+function loadProgress(cb) {
+  let local = null; try { local = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) {}
+  if (!tgv('6.9')) return cb(local);
+  let done = false; const fin = (v) => { if (done) return; done = true; cb(v); };
+  try { TG.CloudStorage.getItem(SAVE_KEY, (err, v) => { let c = null; try { c = v ? JSON.parse(v) : null; } catch (e) {} fin(c || local); }); } catch (e) { fin(local); }
+  setTimeout(() => fin(local), 1500);
+}
+
+/* ================= ПАНЕЛИ (встроенная информация) ================= */
+const chip = (st) => ({ fact: '<span class="chip ok">факт</span>', fic: '<span class="chip fic">вымысел</span>', int: '<span class="chip int">интерпретация</span>', hyp: '<span class="chip hyp">гипотеза</span>' })[st] || '';
+const srcLinks = (keys) => (keys || []).map(k => SRC[k] ? `<a href="${SRC[k].url}" target="_blank" rel="noopener">${SRC[k].t}</a>` : '').join('<br>');
+const PANEL = {
+  calm: () => { const v = S.calm; const cls = v >= 60 ? 'ok' : v >= 40 ? 'warn' : 'bad'; return `<div class="phone"><div class="ph-top"><span>ГОСУСЛУГИ · СПОКОЙСТВИЕ</span><span>09:41</span></div><div class="ph-name">Пушнин Е. А. · депутат</div><div class="ph-idx ${cls}"><b>${v}</b><small>индекс спокойствия</small></div><div class="ph-scale"><i style="left:${v}%"></i><span style="left:30%">30</span><span style="left:50%">50</span></div><ul class="ph-rules"><li>ниже 50 — запрет выезда за границу</li><li>ниже 30 — ограничение права на труд</li><li>сообщение о беспокойстве: <b>+</b> · недонесение: <b>−</b></li></ul><button class="ph-btn">Сообщить о беспокойстве</button></div>`; },
+  law: () => `<div class="paper">${DOCS.law.html}</div>`,
+  stamp: () => `<div class="paper">${DOCS.stamp.html}</div>`,
+  votes: () => { const s = cur().score || [450, 0, 0, 0]; return `<div class="votes"><div class="vrow"><i class="led g"></i>за<b id="v0">0</b></div><div class="vrow"><i class="led r"></i>против<b id="v1">0</b></div><div class="vrow"><i class="led y"></i>воздержались<b id="v2">0</b></div><div class="vrow"><i class="led n"></i>не голосовали<b id="v3">0</b></div><div class="bar"><div class="fill" id="vfill"></div><span class="mark m2" style="left:66.7%">⅔</span></div><p class="pnote">Ваш голос: <b>${({ za: '«за»', protiv: '«против»', vozd: '«воздержался»', none: 'карточка вынута' })[S.flags.vote] || '—'}</b>. На табло он не виден.</p></div>`; },
+  compare10: () => `<div class="ph">Одна процедура — две страны</div><div class="tbl"><table><tr><th>Признак</th><th>Правовая процедура</th><th>Декорация («Тихий час»)</th></tr>${[
+      ['Кто пишет закон', 'Внесён субъектом инициативы, автор известен', 'Конверт из Аппарата без автора'],
+      ['Комитет', 'Недели на отзывы, таблица поправок', '4 минуты, поправка «не поступала»'],
+      ['Оппозиция', 'Может проиграть голосование', 'Уводят на «беседу» до голосования'],
+      ['Голосование', 'Голос учитывается как подан', '450 «за» при любой кнопке'],
+      ['Кворум', 'Считают присутствующих', 'Считают карточки'],
+      ['Верхняя палата', 'Срок на рассмотрение, право отклонить', 'Одобрено до звонка'],
+      ['Подпись', 'После принятия, с правом вето', 'Стояла заранее'],
+      ['Суд', 'Проверяет закон на соответствие конституции', 'Реорганизован указом накануне'],
+      ['СМИ', 'Передают разные позиции', 'Монтируют одну'],
+      ['Жалоба', 'Рассматривает независимый орган', 'Рассматривает тот, на кого жалуешься']
+    ].map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>`,
+  final: () => `<div class="btnrow"><button data-act="archive" data-tab="par">Исторические параллели</button><button data-act="archive" data-tab="ev">Документы и доска</button><button data-act="restart">Сыграть иначе</button></div><p class="pnote">Попробуйте нажать другую кнопку на голосовании: изменятся только реплики и эпилог.</p>`
+};
+const LEVELN = ['—'];
+
+/* ================= СОСТОЯНИЕ ================= */
+const S = { calm: GAME.calm0, flags: {}, applied: {}, i: 0, seq: null, pos: 0, saved: null, asked: {}, ev: new Set(), level: 0, hist: [], visited: new Set(), routes: new Set(), typing: false, shown: 0, ui: null, aside: null, sound: false, rm: false, paused: false, t0: 0, cap: '' };
+try { const p = JSON.parse(localStorage.getItem('kd2-prefs') || '{}'); S.sound = !!p.sound; S.rm = p.rm ?? matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { S.rm = matchMedia('(prefers-reduced-motion: reduce)').matches; }
+const savePrefs = () => { try { localStorage.setItem('kd2-prefs', JSON.stringify({ sound: S.sound, rm: S.rm })); } catch (e) {} };
+const idx = (id) => SCENES.findIndex(s => s.id === id);
+const cur = () => SCENES[S.i];
+
+/* ================= ЗВУК (синтез) ================= */
+const AU = { ctx: null, m: null, amb: null, ambKind: null,
+  init() { if (this.ctx) return; const C = window.AudioContext || window.webkitAudioContext; if (!C) return; this.ctx = new C(); this.m = this.ctx.createGain(); this.m.gain.value = .45; this.m.connect(this.ctx.destination); },
+  tone(f, d, type = 'square', v = .06, slide = 0, delay = 0) { if (!S.sound || !this.ctx) return; const t = this.ctx.currentTime + delay; const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.linearRampToValueAtTime(Math.max(20, f + slide), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(this.m); o.start(t); o.stop(t + d + .02); },
+  nbuf: null,
+  noise(d, v = .1, fq = 1200, type = 'lowpass', delay = 0) { if (!S.sound || !this.ctx) return; if (!this.nbuf) { const b = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate); const a = b.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; this.nbuf = b; } const t = this.ctx.currentTime + delay; const s = this.ctx.createBufferSource(); s.buffer = this.nbuf; const f = this.ctx.createBiquadFilter(); f.type = type; f.frequency.value = fq; const g = this.ctx.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); s.connect(f); f.connect(g); g.connect(this.m); s.start(t); s.stop(t + d + .05); },
+  sfx(n) { if (!S.sound) return; this.init(); const T = this; ({
+    blip: () => T.tone(660 + Math.random() * 120, .025, 'square', .018),
+    adv: () => T.tone(520, .05, 'triangle', .05),
+    step: () => { for (let i = 0; i < 3; i++) T.noise(.07, .18, 380, 'lowpass', i * .28); },
+    beep: () => { T.tone(1180, .1, 'square', .05); T.tone(1480, .12, 'square', .05, 0, .12); },
+    paper: () => T.noise(.35, .14, 3200, 'bandpass'),
+    vote: () => { [523, 659, 784, 1046].forEach((f, i) => T.tone(f, .16, 'square', .045, 0, i * .09)); },
+    stamp: () => { T.noise(.1, .5, 260); T.tone(70, .2, 'sine', .3); },
+    twist: () => { T.tone(196, .9, 'sawtooth', .05, -60); T.tone(147, .9, 'sawtooth', .04, -40, .1); },
+    close: () => { T.noise(.25, .3, 200); T.tone(55, .8, 'sine', .25); },
+    whoosh: () => T.noise(.7, .14, 900, 'bandpass'),
+    glitch: () => { for (let i = 0; i < 6; i++) T.tone(200 + Math.random() * 1600, .04, 'square', .04, 0, i * .05); },
+    elev: () => { T.tone(80, 1.1, 'sine', .12, 30); T.tone(1320, .3, 'sine', .04, 0, .9); },
+    clock: () => { for (let i = 0; i < 8; i++) T.tone(i % 2 ? 1800 : 1400, .02, 'square', .03, 0, i * .1); },
+    rewind: () => T.tone(300, .8, 'sawtooth', .04, 900),
+    ev: () => { T.tone(880, .08, 'triangle', .06); T.tone(1320, .14, 'triangle', .06, 0, .08); },
+    door: () => { T.noise(.3, .25, 180); T.tone(90, .25, 'sine', .15); },
+    choose: () => T.tone(740, .04, 'square', .03)
+  })[n]?.(); },
+  ambience(kind) { if (!this.ctx || !S.sound) { this.ambKind = kind; return; } if (kind === this.ambKind && this.amb) return; this.ambKind = kind; const old = this.amb; if (old) { old.g.gain.linearRampToValueAtTime(.0001, this.ctx.currentTime + .8); setTimeout(() => { try { old.src.stop(); old.osc && old.osc.stop(); } catch (e) {} }, 900); this.amb = null; }
+    const cfg = { city: [500, .05, 0], room: [260, .025, 0], murmur: [700, .035, 0], drone: [180, .012, 55], quiet: [200, .01, 0] }[kind]; if (!cfg) return; if (!this.nbuf) this.noise(.01, .0001);
+    const src = this.ctx.createBufferSource(); src.buffer = this.nbuf; src.loop = true; const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cfg[0]; const g = this.ctx.createGain(); g.gain.value = .0001; g.gain.linearRampToValueAtTime(cfg[1], this.ctx.currentTime + 1.2); src.connect(f); f.connect(g); g.connect(this.m); src.start(); let osc = null; if (cfg[2]) { osc = this.ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = cfg[2]; const og = this.ctx.createGain(); og.gain.value = .05; osc.connect(og); og.connect(g); osc.start(); } this.amb = { src, g, osc }; },
+  stopAll() { if (this.amb) { try { this.amb.src.stop(); this.amb.osc && this.amb.osc.stop(); } catch (e) {} this.amb = null; } }
+};
+const AMB = { street: 'city', street_ev: 'city', checkpoint: 'room', lobby: 'murmur', office: 'quiet', corridor: 'room', committee: 'room', hall: 'murmur', board: 'murmur', council: 'murmur', cabinet: 'quiet', print: 'room', yard: 'city', yard_ev: 'city', boardroom: 'drone', archive: 'drone', archdesk: 'drone', docworld: 'drone', hub: 'drone', blueprint: 'quiet', final: 'drone' };
+
+/* ================= РЕНДЕР ================= */
+const view = document.getElementById('view'); const vctx = view.getContext('2d'); vctx.imageSmoothingEnabled = false;
+const [bufA, bxA] = mk(W, H); const [tmpC, tmpX] = mk(W, H);
+const CACHE = {};
+function bgCanvas(key) {
+  if (CACHE[key]) return CACHE[key]; const [c, x] = mk(W, H);
+  if (key === 'street_ev') BG.street(x, true); else if (key === 'yard_ev') BG.yard(x, true); else if (BG[key]) BG[key](x);
+  return CACHE[key] = c;
+}
+function fgCanvas(key) { const k = 'fg:' + key; if (CACHE[k]) return CACHE[k]; const [c, x] = mk(W, H); BG[key](x); return CACHE[k] = c; }
+function speaking(sc) { const ln = curLine(); return S.typing && ln ? ln.w : null; }
+function renderScene(x, sc, t, tt) {
+  x.drawImage(bgCanvas(sc.bg), 0, 0);
+  const fx = new Set(sc.fx || []);
+  fakeflag(x, sc.bg, t);
+  if (fx.has('fire')) fire(x, t);
+  if (fx.has('portraits')) portraits(x, sc.bg);
+  if (fx.has('banner')) banners(x, t);
+  if (fx.has('timer')) { const rem = Math.max(0, 240 - Math.floor(tt / 250)); R(x, 26, 26, 96, 60, '#0b0d12'); frame(x, 26, 26, 96, 60, '#5a5e6a', 2); pnum(x, Math.floor(rem / 60) + ':' + String(rem % 60).padStart(2, '0'), 38, 40, 6, rem < 30 && Math.floor(t / 300) % 2 ? '#ff6b6b' : '#e0485a'); }
+  if (fx.has('tvticker')) { R(x, 212, 120, 148, 16, '#7a1e2e'); for (let k = 0; k < 12; k++) { const xx = 360 - ((t / 30 + k * 26) % 160); if (xx > 212 && xx < 354) R(x, xx, 126, 18, 4, '#f4ecd8'); } R(x, 216, 34, 4, 4, Math.floor(t / 500) % 2 ? '#e0485a' : '#5a1520'); ell(x, 286, 80, 16, 18, '#26232e'); ell(x, 286, 66, 9, 9, '#efe0c4'); }
+  if (fx.has('nightcity')) nightcity(x, t, tt);
+  if (fx.has('flag')) DYN.flag(x, t, 193, 17);
+  if (fx.has('detector')) { const on = Math.floor(t / 500) % 2; R(x, 176, 64, 6, 4, on ? '#6fd08c' : '#1d4a35'); }
+  if (fx.has('chandelier')) for (let i = -3; i <= 3; i++) if ((Math.floor(t / 300) + i) % 3) P(x, 192 + i * 6, 7, '#fff7c4');
+  if (fx.has('lobbyclock')) clock(x, 254, 64, 9, 9, 20, DYN.sec(t));
+  if (fx.has('hallclock')) clock(x, 60, 92, 8, sc.id === 's07' ? 12 : 11, sc.id === 's07' ? 0 : 30, DYN.sec(t));
+  if (fx.has('cabclock')) clock(x, 230, 40, 8, 18, 20, DYN.sec(t), '#c9a65a');
+  if (fx.has('doorglow')) glow(x, 192, 104, 16 + Math.round(Math.sin(t / 600) * 3), '#fff1c4', .35);
+  if (fx.has('screens')) for (const sx of [19, 287]) for (let k = 0; k < 6; k++) { const w = 20 + ((k * 37 + Math.floor(t / 400)) % 50); R(x, sx + 4, 22 + k * 7, w, 2, k === 0 ? '#7fd6ff' : '#2a5a8a'); }
+  if (fx.has('hubglow')) for (const [dx, col] of [[76, '#ffb347'], [192, '#7fd6ff'], [308, '#6fd08c']]) { const on = (Math.floor(t / 700) + dx) % 3 === 0; if (on) frame(x, dx - 25, 59, 50, 94, col); }
+  if (fx.has('banners')) { [[40, 96, '#6fd08c'], [150, 118, '#e0485a'], [270, 100, '#ffb347']].forEach(([bx, by, col], i) => { for (let k = 0; k < 70; k++) { const yy = by + Math.round(Math.sin(t / 400 + k / 8 + i) * 2); R(x, bx + k, yy, 1, 7, col); if (k % 6 < 4) P(x, bx + k, yy + 3, '#ffffff'); } }); }
+  if (fx.has('score')) { const p = Math.min(1, tt / 2400); const vals = sc.score || [338, 41, 3, 68], cols = ['#6fd08c', '#e0485a', '#f2c14e', '#9aa3b5']; vals.forEach((v, k) => { R(x, 74, 30 + k * 32, 14, 14, cols[k]); pnum(x, String(Math.round(v * (k === 0 ? p : Math.min(1, p * 1.4)))).padStart(3, ' '), 210, 28 + k * 32, 5, cols[k]); for (let j = 0; j < 8; j++) R(x, 100 + j * 12, 34 + k * 32, 8, 6, j < Math.round(8 * (v / 450) * p * 2.2) ? cols[k] : '#1b2236'); }); if (p >= 1 && Math.floor(t / 400) % 2) frame(x, 58, 22, 268, 30, '#6fd08c'); }
+  if (fx.has('cursor') && Math.floor(t / 500) % 2) R(x, 222, 128, 2, 5, '#26305a');
+  const sp = speaking(sc);
+  [...(sc.actors || [])].sort((a, b) => (a.y + (a.s || 2) * 31) - (b.y + (b.s || 2) * 31)).forEach(a => drawActor(x, a, t, sp === a.c));
+  if (sc.fg) x.drawImage(fgCanvas(sc.fg), 0, 0);
+  if (fx.has('paper')) { const fl = Math.sin(t / 260) * 2; R(x, 104, 148 + fl * .5, 20, 13, '#f4ecd8'); R(x, 104, 148 + fl * .5, 20, 1, '#cfc4a8'); for (let k = 0; k < 3; k++) R(x, 107, 151 + k * 3 + fl * .5, 12, 1, '#9a917e'); if (Math.floor(t / 600) % 2) frame(x, 102, 146 + fl * .5, 24, 17, '#f2c14e'); }
+  if (fx.has('leaves')) DYN.leaves(x, t);
+  if (fx.has('dust')) DYN.dust(x, t);
+  if (fx.has('sheets')) DYN.sheets(x, t);
+  if (fx.has('birds')) DYN.birds(x, t);
+  if (fx.has('finale')) finale(x, t, tt);
+  if (fx.has('cams')) cams(x, t);
+  if (fx.has('lightsout')) { const k = Math.min(1, tt / 14000); const top = Math.round(H - k * (H - 60)); x.fillStyle = '#05040a'; x.fillRect(0, top + 4, W, H - top); for (let yy = top; yy < top + 4; yy++) for (let xx = 0; xx < W; xx++) if (BAYER[((yy & 3) * 4) + (xx & 3)] < (yy - top) / 4) P(x, xx, yy, '#05040a'); x.globalAlpha = k * .45; x.fillStyle = '#05040a'; x.fillRect(0, 0, W, top); x.globalAlpha = 1; }
+}
+function paw(x, cx, cy, s, col) { ell(x, cx, cy + s, s + 1, s, col); for (const [dx, dy] of [[-s - 1, -s], [-s / 2, -s * 2], [s / 2, -s * 2], [s + 1, -s]]) ell(x, Math.round(cx + dx), Math.round(cy + dy), Math.max(1, Math.round(s * .45)), Math.max(1, Math.round(s * .55)), col); }
+function fakeflagRect(x, fx0, fy0, w, h) { R(x, fx0, fy0, w, h, '#4a4e5c'); R(x, fx0, fy0 + Math.round(h * .38), w, Math.round(h * .24), '#9b2335'); paw(x, fx0 + Math.round(w / 2), fy0 + Math.round(h / 2) - 1, Math.max(2, Math.round(h / 10)), '#d9b45a'); }
+function fakeflag(x, bg, t) {
+  if (bg === 'hall' || bg === 'board') { R(x, 110, 6, 164, 78, '#d9b45a'); fakeflagRect(x, 113, 9, 158, 72); }
+  else if (bg === 'council') fakeflagRect(x, 124, 54, 136, 36);
+  else if (bg === 'cabinet') { R(x, 41, 26, 24, 48, '#3a2414'); for (let k = 0; k < 4; k++) R(x, 41, 26 + k, 0, 0, '#000'); fakeflagRect(x, 41, 26, 22, 48); }
+  else if (bg === 'checkpoint') fakeflagRect(x, 42, 32, 50, 26);
+}
+DYN.flag = function (c, t, x0, y0) { for (let i = 0; i < 18; i++) { const dy = Math.round(Math.sin(t / 220 - i / 3) * 1.5); R(c, x0 + i, y0 + dy, 1, 12, i > 6 && i < 11 ? '#9b2335' : '#4a4e5c'); R(c, x0 + i, y0 + 4 + dy, 1, 4, '#9b2335'); } P(c, x0 + 9, y0 + 5, '#d9b45a'); };
+function fire(x, t) {
+  x.globalAlpha = .18; x.fillStyle = '#ff7a2e'; x.fillRect(40, 30, 304, 142); x.globalAlpha = 1;
+  for (let xx = 40; xx < 344; xx += 2) { const h = 10 + Math.round(8 * Math.sin(t / 130 + xx * .31) + 6 * Math.sin(t / 77 + xx * .13)); for (let k = 0; k < h; k++) { const c = k < h * .35 ? '#e0482a' : k < h * .7 ? '#ff9a2e' : '#ffde59'; R(x, xx, 44 - k + Math.round(h * .2), 2, 1, c); } }
+  for (let i = 0; i < 14; i++) { const p = ((t / 2600 + i / 14) % 1); const sx = 60 + i * 21 + Math.sin(p * 6 + i) * 8; const sy = 34 - p * 40; ell(x, Math.round(sx), Math.round(sy), 4 + Math.round(p * 7), 3 + Math.round(p * 5), p < .5 ? '#3a2a2a' : '#2a2026'); }
+  for (let col = 0; col < 15; col++) { const wx = 54 + col * 20; if (wx > 150 && wx < 226) continue; for (let row = 0; row < 4; row++) { const fl = Math.sin(t / 90 + col * 3 + row * 7) > .2; R(x, wx, 62 + row * 26, 10, 16, fl ? '#ff9a2e' : '#e0482a'); if (fl) R(x, wx + 2, 64 + row * 26, 6, 6, '#ffde59'); } }
+}
+function portraits(x, bg) {
+  const P2 = portrait('verkhovny'); const put = (px, py, w, h) => { R(x, px - 3, py - 3, w + 6, h + 6, '#c99a3a'); frame(x, px - 3, py - 3, w + 6, h + 6, '#8a6420'); x.drawImage(P2, 0, 0, 104, 72, px, py, w, h); };
+  if (bg === 'lobby') { put(62, 44, 40, 40); put(282, 44, 40, 40); }
+  else if (bg === 'corridor') { put(40, 70, 26, 26); put(318, 70, 26, 26); put(186, 64, 12, 12); }
+  else if (bg === 'office') { put(122, 32, 46, 30); }
+}
+function banners(x, t) { for (const bx of [92, 274]) { for (let k = 0; k < 18; k++) { const dx = Math.round(Math.sin(t / 500 + k / 4) * 1); R(x, bx + dx, 6 + k * 4, 18, 4, '#9b2335'); } R(x, bx - 1, 4, 20, 2, '#d9b45a'); x.drawImage(portrait('verkhovny'), 0, 0, 104, 72, bx + 2, 20, 14, 10); R(x, bx + 2, 78, 14, 2, '#d9b45a'); } }
+function cams(x, t) { for (const [cx, cy, d] of [[18, 22, 1], [350, 26, -1]]) { R(x, cx, cy, 16, 8, '#c9ccd6'); R(x, cx + (d > 0 ? 14 : -4), cy + 2, 6, 4, '#2a2a33'); R(x, cx + 7, cy - 6, 2, 6, '#5d6370'); if (Math.floor(t / 600) % 2) R(x, cx + 2, cy + 2, 2, 2, '#ff3b3b'); const a = Math.sin(t / 1800) * .5; x.globalAlpha = .08; x.fillStyle = '#ff9a9a'; x.beginPath(); x.moveTo(cx + 8, cy + 6); x.lineTo(cx + 8 + d * 90 + a * 60, cy + 120); x.lineTo(cx + 8 + d * 40 + a * 60, cy + 130); x.closePath(); x.fill(); x.globalAlpha = 1; } }
+function nightcity(x, t, tt) {
+  const r = rng(9); for (let i = 0; i < 60; i++) P(x, r() * W, r() * 110, (Math.floor(t / 500) + i) % 6 ? '#2a2f4a' : '#9aa3c0');
+  const off = Math.min(1, tt / 10000); const G = 170;
+  for (let i = 0; i < 26; i++) { const bw = 10 + (i * 7) % 11, bx = 4 + i * 15, hh = 30 + (i * 37) % 70; R(x, bx, G - hh, bw, hh, i % 3 ? '#14172a' : '#1a1d34'); for (let wy = G + 4 - hh; wy < G - 4; wy += 6) for (let wx = bx + 2; wx < bx + bw - 2; wx += 4) { const s = rng(i * 131 + wy * 7 + wx)(); if (s > off) R(x, wx, wy, 2, 3, s > .9 ? '#ffe7a8' : '#ffcf6b'); } }
+  R(x, 0, G, W, H - G, '#07080f'); R(x, 186, G - 64, 12, 64, '#1d2036'); R(x, 190, G - 72, 4, 8, '#1d2036'); if (off < 1) P(x, 192, G - 74, '#e0485a');
+}
+
+function finale(x, t, tt) {
+  const u = Math.min(1, tt / 6000), e = 1 - Math.pow(1 - u, 3); const G = 156;
+  const r = rng(5); for (let i = 0; i < 50; i++) P(x, r() * W, r() * 100, (Math.floor(t / 400) + i) % 5 ? '#3a4470' : '#c9d3ec');
+  for (let i = 0; i < 26; i++) { const bw = 10 + (i * 7) % 9, bx = 8 + i * 14 + ((i * 5) % 6); const hh = Math.round((14 + (i * 37) % 40) * Math.min(1, Math.max(0, e * 1.3 - i * .01))); if (hh < 1 || Math.abs(bx + bw / 2 - 192) < 10) continue; R(x, bx, G - hh, bw, hh, i % 3 ? '#1d2140' : '#262a50'); for (let wy = G + 3 - hh; wy < G - 3; wy += 5) for (let wx = bx + 2; wx < bx + bw - 2; wx += 4) if (rng(i * 100 + wy * 3 + wx)() < u * .8) R(x, wx, wy, 2, 2, '#ffcf6b'); }
+  R(x, 0, G, W, H - G, '#0b0d1c'); for (let k = 0; k < 6; k++) R(x, 20 + k * 64, G + 4, 30, 1, '#1d2140');
+  if (u < 1) { const dw = Math.round(180 - 168 * e), dh = Math.round(116 - 98 * e); const dx = Math.round(192 - dw / 2), dy = Math.round(36 + (G - 18 - 36) * e); R(x, dx, dy, dw, dh, '#f4ecd8'); frame(x, dx, dy, dw, dh, '#cfc4a8'); for (let k = 0; k < Math.floor(dh / 7); k++) R(x, dx + Math.round(dw * .1), dy + 4 + k * 7, Math.round(dw * .7), 1, '#9a917e'); }
+  else { R(x, 186, G - 20, 12, 20, '#f4ecd8'); R(x, 188, G - 17, 2, 2, '#ffcf6b'); R(x, 194, G - 17, 2, 2, '#ffcf6b'); R(x, 188, G - 11, 2, 2, '#ffcf6b'); R(x, 194, G - 11, 2, 2, (Math.floor(t / 700) % 2) ? '#ffcf6b' : '#3a3150'); }
+}
+
+/* ================= ПЕРЕХОДЫ ================= */
+function drawZoom(ctx, src, z, fx, fy, oy = 0) { const sw = W / z, sh = H / z; const cx = W / 2 + (fx - W / 2) * (1 - 1 / z), cy = H / 2 + (fy - H / 2) * (1 - 1 / z); ctx.drawImage(src, cx - sw / 2, cy - sh / 2 + oy, sw, sh, 0, 0, W, H); }
+function pixelate(ctx, k) { if (k <= 1.05) return; const w = Math.max(1, Math.round(W / k)), h = Math.max(1, Math.round(H / k)); tmpC.width = w; tmpC.height = h; tmpX.imageSmoothingEnabled = false; tmpX.drawImage(ctx.canvas, 0, 0, W, H, 0, 0, w, h); ctx.drawImage(tmpC, 0, 0, w, h, 0, 0, W, H); }
+function veil(ctx, a, col = '#000') { if (a <= 0) return; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = col; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+function sepia(ctx, a) { if (a <= 0) return; ctx.globalCompositeOperation = 'saturation'; ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = a * .55; ctx.fillStyle = '#e0a860'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+function rings(ctx, p, dir) { for (let k = 0; k < 10; k++) { let s = ((k / 10) + p * dir * 1.2) % 1; if (s < 0) s += 1; const w = Math.round(W * s), h = Math.round(H * s); frame(ctx, Math.round(192 - w / 2), Math.round(108 - h / 2), w, h, k % 2 ? '#f2c14e' : '#33468a', Math.max(1, Math.round(s * 4))); } }
+const TR = {
+  walk: { out(c, src, p, f) { const e = ease(p); drawZoom(c, src, 1 + e * 1.8, f[0], f[1], Math.round(Math.abs(Math.sin(p * Math.PI * 3)) * 3)); veil(c, (p - .6) / .4); }, in(c, src, p) { drawZoom(c, src, 1 + (1 - ease(p)) * .25, 192, 108); veil(c, 1 - p); }, sfx: 'step' },
+  tunnel: { out(c, src, p, f) { R(c, 0, 0, W, H, '#0b0812'); rings(c, p, 1); const s = 1 - ease(p) * .96; c.drawImage(src, 192 - W * s / 2 + (f[0] - 192) * (1 - s), 108 - H * s / 2 + (f[1] - 108) * (1 - s), W * s, H * s); }, in(c, src, p) { R(c, 0, 0, W, H, '#0b0812'); rings(c, p, -1); const s = .04 + ease(p) * .96; c.drawImage(src, 192 - W * s / 2, 108 - H * s / 2, W * s, H * s); }, sfx: 'whoosh' },
+  time: { out(c, src, p, f, dir) { c.drawImage(src, 0, 0); sepia(c, p); const r = Math.round(10 + ease(p) * 70); const cx = Math.round(f[0] + (192 - f[0]) * ease(p)), cy = Math.round(f[1] + (108 - f[1]) * ease(p)); const m = ((dir < 0 ? -1 : 1) * p * 1800) % 60; clock(c, cx, cy, r, 9 + (dir || 1) * p * 30, (m + 60) % 60, null); veil(c, (p - .75) / .25, '#f4ead2'); }, in(c, src, p) { c.drawImage(src, 0, 0); sepia(c, 1 - p); veil(c, 1 - p * 2.2, '#f4ead2'); }, sfx: 'clock' },
+  glitch: { out(c, src, p) { c.drawImage(src, 0, 0); const r = rng((Math.floor(p * 30) + 1) * 977); const n = 4 + Math.floor(p * 16); for (let i = 0; i < n; i++) { const y = Math.floor(r() * H), h = 2 + Math.floor(r() * 14), dx = Math.round((r() - .5) * 60 * p); c.drawImage(src, 0, y, W, h, dx, y, W, h); } c.globalCompositeOperation = 'lighter'; c.globalAlpha = .25 * p; c.drawImage(src, 3, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; for (let i = 0; i < 40 * p; i++) R(c, r() * W, r() * H, 2 + r() * 10, 2, ['#e0485a', '#7fd6ff', '#f4ead2'][i % 3]); if (p > .7) pixelate(c, 1 + (p - .7) * 30); }, in(c, src, p) { TR.glitch.out(c, src, 1 - p); }, sfx: 'glitch' },
+  rewind: { out(c, src, p) { R(c, 0, 0, W, H, '#05050a'); const s = 1 - p * .18; const jy = Math.round(Math.sin(p * 80) * 2 * p); c.drawImage(src, 192 - W * s / 2, 108 - H * s / 2 + jy, W * s, H * s); sepia(c, p * .8); for (let y = 0; y < H; y += 3) R(c, 0, y, W, 1, 'rgba(0,0,0,.25)'); const r = rng(Math.floor(p * 40) + 3); for (let i = 0; i < 3; i++) { const y = Math.floor(r() * H); c.drawImage(src, 0, y, W, 4, Math.round((r() - .5) * 30), y, W, 4); } trap(c, 12, 26, 14, 14, 14, 14, '#fff'); for (let k = 0; k < 2; k++) for (let j = 0; j < 7; j++) R(c, 16 + k * 9 + (7 - Math.abs(j - 3) * 2) * 0, 12 + j, 0, 0, '#fff'); for (let k = 0; k < 2; k++) for (let j = 0; j <= 6; j++) R(c, 22 + k * 9 - (3 - Math.abs(j - 3)), 12 + j, 3 - Math.abs(j - 3) + 1, 1, '#f4ead2'); pnum(c, '00:' + String(59 - Math.floor(p * 59)).padStart(2, '0'), 40, 12, 2, '#f4ead2'); }, in(c, src, p) { TR.rewind.out(c, src, 1 - p); }, sfx: 'rewind' },
+  descent: { out(c, src, p) { const e = ease(p); R(c, 0, 0, W, H, '#0b0812'); const y = Math.round(-e * H); c.drawImage(src, 0, y); slab(c, y + H); }, in(c, src, p) { const e = ease(p); R(c, 0, 0, W, H, '#0b0812'); const y = Math.round((1 - e) * H); slab(c, y - 22); c.drawImage(src, 0, y); }, sfx: 'elev' },
+  ascent: { out(c, src, p) { const e = ease(p); R(c, 0, 0, W, H, '#0b1430'); streaks(c, p); const y = Math.round(e * H); c.drawImage(src, 0, y); }, in(c, src, p) { const e = ease(p); R(c, 0, 0, W, H, '#0b1430'); streaks(c, p + 1); const y = Math.round(-(1 - e) * H); c.drawImage(src, 0, y); }, sfx: 'elev' },
+  docdive: { out(c, src, p, f) { const e = ease(p); drawZoom(c, src, 1 + e * 7, f[0], f[1]); veil(c, (p - .45) * 2, '#efe3c4'); if (p > .55) textRush(c, (p - .55) / .45); }, in(c, src, p) { drawZoom(c, src, 1 + (1 - ease(p)) * .5, 192, 108); veil(c, 1 - p * 1.6, '#efe3c4'); if (p < .6) textRush(c, 1 + p); }, sfx: 'paper' },
+  focus: { out(c, src, p, f) { c.drawImage(src, 0, 0); pixelate(c, 2 + p * 12); const r = Math.round(70 * (1 - p) + 10); c.save(); c.beginPath(); c.arc(f[0], f[1], r, 0, Math.PI * 2); c.clip(); drawZoom(c, src, 1 + p * .6, f[0], f[1]); c.restore(); veil(c, (p - .8) / .2, '#ffffff'); }, in(c, src, p) { drawZoom(c, src, 1 + (1 - ease(p)) * .15, 192, 108); veil(c, 1 - p * 1.5, '#ffffff'); }, sfx: 'door' },
+  fade: { out(c, src, p) { c.drawImage(src, 0, 0); veil(c, p); }, in(c, src, p) { c.drawImage(src, 0, 0); veil(c, 1 - p); } }
+};
+function slab(c, y) { R(c, 0, y, W, 22, '#3a3842'); for (let x = 0; x < W; x += 12) { trap(c, y + 4, y + 9, x, x + 5, x + 3, x + 8, '#f2c14e'); } R(c, 0, y + 10, W, 2, '#22202a'); pnum(c, '1', 360, y + 13, 1, '#f4ead2'); }
+function streaks(c, p) { for (let i = 0; i < 26; i++) { const x = (i * 53) % W, len = 20 + (i * 17) % 50; const y = ((i * 97 + p * 900) % (H + len)) - len; R(c, x, y, 1, len, i % 3 ? '#7fd6ff' : '#f2c14e'); } }
+function textRush(c, p) { const k = Math.min(1, p); for (let i = 0; i < 18; i++) { const t = ((i / 18) + k * .9) % 1; const y = Math.round(108 + (i % 2 ? 1 : -1) * t * t * 120); const w = Math.round(30 + t * 300); R(c, 192 - w / 2 + ((i * 37) % 40 - 20) * t, y, w * .6, Math.max(1, Math.round(t * 5)), '#9a917e'); } }
+
+let TRS = null; // активный переход
+function startTransition(toIdx, opt = {}) {
+  if (TRS) return;
+  const from = cur(); const type = S.rm ? 'fade' : (opt.type || from.out?.type || 'fade');
+  TRS = { type, phase: 'out', t0: performance.now(), to: toIdx, f: opt.f || from.out?.f || [192, 108], dir: opt.dir ?? from.out?.dir ?? 1, back: !!opt.back, landEnd: !!opt.landEnd, dur: S.rm ? 260 : 950 };
+  AU.sfx(TR[type].sfx || 'whoosh'); hideOverlays(); hap.hit('soft');
+}
+function finishTransition() { if (!TRS) return; if (TRS.phase === 'out') { enterScene(TRS.to, TRS.landEnd); } TRS = null; afterEnter(); }
+
+/* ================= СЦЕНА И ДИАЛОГ ================= */
+const $ = (id) => document.getElementById(id);
+function enterScene(i, landEnd) {
+  S.i = i; const sc = cur(); S.seq = sc.lines; S.saved = null; S.pos = landEnd ? sc.lines.length - 1 : 0; S.t0 = performance.now(); S.ui = null; S.aside = null; S.visited.add(sc.id);
+  if (sc.level && sc.level > S.level) { S.level = sc.level; toast('Уровень доступа: ' + LEVELN[S.level]); }
+  if (sc.route) S.routes.add(sc.route);
+  view.style.filter = sc.sat == null || sc.sat >= 1 ? '' : `saturate(${sc.sat})`;
+  AU.ambience(AMB[sc.bg] || 'quiet'); renderHot(); updHud(); if (BOOTED) saveProgress();
+}
+let BOOTED = false;
+function afterEnter() { showLine(!!S.rm); }
+function curLine() { return S.aside || (S.seq ? S.seq[S.pos] : null); }
+function computeUI() { let u = null; const scan = (seq, upto) => { for (let k = 0; k <= upto && k < seq.length; k++) if (seq[k].ui) u = seq[k].ui; }; if (S.saved) scan(S.saved.seq, S.saved.pos - (S.saved.branch ? 1 : 0)); scan(S.seq, S.pos); return u; }
+function showLine(instant) {
+  let ln = curLine(); if (!ln) return;
+  if (ln.branch && !S.aside) { const sc = cur(); const key = ln.branch + ':' + (S.flags[ln.branch] || ''); const blk = sc.blocks && sc.blocks[key]; if (blk) { S.saved = { seq: S.seq, pos: S.pos + 1, branch: true }; S.seq = blk.concat([{ _ret: true }]); S.pos = 0; } else { S.pos++; } ln = curLine(); if (!ln) return nextScene(); if (ln._ret) { S.seq = S.saved.seq; S.pos = S.saved.pos; S.saved = null; if (S.pos >= S.seq.length) return nextScene(); ln = curLine(); } }
+  if (ln.calm && !S.aside) { const key = cur().id + ':' + (S.saved ? 'b' : '') + S.pos + ':' + ln.x.slice(0, 12); if (!S.applied[key]) { S.applied[key] = 1; calmDelta(ln.calm); } }
+  const ch = CH[ln.w] || CH.narr; const dlg = $('dlg');
+  dlg.classList.toggle('narr', ln.w === 'narr');
+  $('dname').textContent = ch.name || ''; $('dname').hidden = !ch.name; $('drole').textContent = ch.role || '';
+  const pc = $('dport'); if (ln.w !== 'narr' && CH[ln.w] && CH[ln.w].pal) { const p = portrait(ln.w); const x = pc.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, 104, 72); x.drawImage(p, 0, 0); pc.parentElement.hidden = false; } else pc.parentElement.hidden = true;
+  S.full = ln.x; S.shown = instant ? ln.x.length : 0; S.typing = !instant; $('dtext').textContent = instant ? ln.x : '';
+  renderChoices(); $('dnext').hidden = true;
+  if (ln.cap) setCap(ln.cap); else if (!S.aside && S.pos === 0 && !S.saved) setCap(cur().cap);
+  const u = S.aside ? S.ui : computeUI(); if (u !== S.ui) { S.ui = u; renderPanel(); } else if (!u) $('panel').hidden = true;
+  if (ln.ev && !S.aside) grant(ln.ev);
+  if (ln.sfx) AU.sfx(ln.sfx);
+  if (instant) finishTyping();
+  updHud();
+}
+function finishTyping() { S.typing = false; S.shown = S.full.length; $('dtext').textContent = S.full; const ln = curLine(); renderChoices(true); $('dnext').hidden = !!(ln && ln.choices && !S.aside); }
+function renderChoices(show) {
+  const box = $('choices'); const ln = curLine(); box.innerHTML = '';
+  if (!ln || !ln.choices || S.aside || !show) { box.hidden = true; return; }
+  box.hidden = false;
+  ln.choices.forEach((o, k) => { const b = document.createElement('button'); b.className = 'choice'; const done = o.b && S.asked[cur().id + ':' + o.b]; const routeDone = o.go && ({ a1: 'A', b1: 'B', c1: 'C' })[o.go] && S.routes.has(({ a1: 'A', b1: 'B', c1: 'C' })[o.go]); b.innerHTML = `<span class="ck">${done || routeDone ? '✓' : '▸'}</span>${o.l}`; b.dataset.k = k; b.addEventListener('click', (e) => { e.stopPropagation(); choose(k); }); box.appendChild(b); });
+  const bs = [...box.querySelectorAll('.choice')]; const fi = bs.findIndex(b => b.querySelector('.ck').textContent !== '✓'); S.ci = fi < 0 ? 0 : fi; focusChoice();
+}
+function focusChoice() { const bs = [...$('choices').querySelectorAll('.choice')]; bs.forEach((b, k) => b.classList.toggle('on', k === S.ci)); }
+function choose(k) {
+  const ln = curLine(); const o = ln.choices[k]; AU.sfx('choose'); hap.hit(o.set && o.set.vote ? 'heavy' : 'light');
+  if (o.set) Object.assign(S.flags, o.set);
+  if (o.calm && !S.asked[cur().id + ':' + o.b]) calmDelta(o.calm);
+  setTimeout(() => saveProgress(), 0);
+  if (o.b) { S.asked[cur().id + ':' + o.b] = true; S.saved = { seq: S.seq, pos: ln.single ? S.pos + 1 : S.pos, branch: !!ln.single }; S.seq = cur().blocks[o.b].concat([{ _ret: true }]); S.pos = 0; showLine(); return; }
+  if (o.go) { const ti = idx(o.go); S.hist.push(S.i); startTransition(ti, { type: 'tunnel' }); return; }
+  if (o.end) { S.pos++; if (S.pos >= S.seq.length) return nextScene(); showLine(); }
+}
+function advance() {
+  if (TRS) { TRS.t0 -= 5000; return; }
+  if (S.paused) return;
+  if (S.typing) { finishTyping(); return; }
+  if (S.aside) { S.aside = null; showLine(true); return; }
+  const ln = curLine(); if (ln && ln.choices) { choose(S.ci || 0); return; }
+  AU.sfx('adv');
+  S.pos++;
+  if (S.seq[S.pos] && S.seq[S.pos]._ret) { const br = S.saved.branch; S.seq = S.saved.seq; S.pos = S.saved.pos; S.saved = null; if (S.pos >= S.seq.length) return nextScene(); showLine(!br); return; }
+  if (S.pos >= S.seq.length) { if (S.saved) { S.seq = S.saved.seq; S.pos = S.saved.pos; S.saved = null; showLine(true); return; } return nextScene(); }
+  showLine();
+}
+function nextScene() { const sc = cur(); if (!sc.next) { S.pos = sc.lines.length - 1; showLine(true); return; } S.hist.push(S.i); startTransition(idx(sc.next)); }
+function back() {
+  if (TRS || S.paused) return;
+  if (S.aside) { S.aside = null; showLine(true); return; }
+  if (S.typing) { finishTyping(); }
+  if (S.pos > 0) { S.pos--; if (S.seq[S.pos]?._ret) S.pos--; while (S.pos > 0 && S.seq[S.pos]?.branch) S.pos--; if (S.seq[S.pos]?.branch) { if (S.hist.length) { const pi = S.hist.pop(); return startTransition(pi, { type: 'rewind', back: true, landEnd: true }); } S.pos = 1; } showLine(true); return; }
+  if (S.saved) { const br = S.saved.branch; S.seq = S.saved.seq; S.pos = Math.max(0, S.saved.pos - (br ? 2 : 0)); S.saved = null; while (S.pos > 0 && S.seq[S.pos] && S.seq[S.pos].branch) S.pos--; showLine(true); return; }
+  if (S.hist.length) { const pi = S.hist.pop(); startTransition(pi, { type: 'rewind', back: true, landEnd: true }); }
+}
+function calmDelta(d) { S.calm = Math.max(0, Math.min(100, S.calm + d)); toast('Индекс спокойствия ' + (d > 0 ? '+' : '−') + Math.abs(d) + ' → ' + S.calm); hap.note(d > 0 ? 'success' : 'error'); AU.sfx(d > 0 ? 'ev' : 'glitch'); const h = document.querySelector('.hcalm'); if (h) { h.classList.remove('flash'); void h.offsetWidth; h.classList.add('flash'); } updHud(); if (S.ui === 'calm') renderPanel(); }
+function jump(id) { const ti = idx(id); if (ti < 0 || ti === S.i) return closeModal(); closeModal(); S.hist.push(S.i); startTransition(ti, { type: 'rewind' }); }
+function grant(id) { if (S.ev.has(id)) return; S.ev.add(id); AU.sfx('ev'); toast((EV[id].st === 'fact' ? '+ Параллель: ' : '+ Документ: ') + EV[id].t); updHud(); }
+
+/* ================= UI ================= */
+function setCap(w) { const c = $('cap'); if (!w) { c.textContent = ''; return; } if (S.cap === w) return; S.cap = w; c.textContent = w; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+function renderPanel() { const p = $('panel'); if (!S.ui || !PANEL[S.ui]) { p.hidden = true; p.innerHTML = ''; return; } p.innerHTML = `<button class="pclose" data-act="pclose" aria-label="Свернуть панель">×</button>` + PANEL[S.ui](); p.hidden = false; p.scrollTop = 0; if (S.ui === 'votes') S.vt0 = performance.now(); if (S.ui === 'pass') { const cv = $('passcv'); const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sprite('murka', {}), 0, 0); } }
+function hideOverlays() { $('panel').hidden = true; $('choices').hidden = true; }
+function renderHot() {
+  const box = $('hot'); box.innerHTML = '';
+  (cur().hot || []).forEach(h => { const b = document.createElement('button'); b.className = 'hs'; b.style.left = (h.x / W * 100) + '%'; b.style.top = (h.y / H * 100) + '%'; b.style.width = (h.w / W * 100) + '%'; b.style.height = (h.h / H * 100) + '%'; b.setAttribute('aria-label', h.label); b.title = h.label; b.innerHTML = '<i></i><span>' + h.label + '</span>'; b.addEventListener('click', (e) => { e.stopPropagation(); hotAct(h.a); }); box.appendChild(b); });
+}
+function hotAct(a) {
+  if (TRS) return;
+  if (a.t === 'next') return advance();
+  if (a.t === 'doc') { if (a.ev) grant(a.ev); return openDoc(a.d); }
+  if (a.t === 'char') { const ch = CH[a.c]; const l = ch.lines && ch.lines.length ? ch.lines[(Date.now() / 1000 | 0) % ch.lines.length] : '…'; S.aside = { w: a.c, x: l }; if (S.typing) { S.typing = false; } showLine(); return; }
+  if (a.t === 'board') return openArchive('board');
+  if (a.t === 'ui') { S.ui = a.u; renderPanel(); return; }
+  if (a.t === 'go') { S.hist.push(S.i); startTransition(idx(a.s), { type: 'tunnel' }); }
+}
+let toastT; function toast(m) { const t = $('toast'); t.textContent = m; t.hidden = false; t.classList.remove('in'); void t.offsetWidth; t.classList.add('in'); clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+function tsLabel(ts) { if (ts.k === 'real') return 'история'; if (ts.k === 'meta') return 'вне времени'; const d = ts.d === 0 ? 'Д0' : ts.d < 0 ? 'Д−' + (-ts.d) : 'Д+' + ts.d; return d + (ts.t ? ' · ' + ts.t : '') + ' · условно'; }
+function updHud() {
+  const sc = cur(); $('hlvl').textContent = S.calm; const cl = S.calm >= 60 ? 'ok' : S.calm >= 40 ? 'warn' : 'bad'; $('hlvl').className = cl; $('hpips').innerHTML = `<i class="bar"><i class="${cl}" style="width:${S.calm}%"></i></i>`;
+  $('hdate').textContent = tsLabel(sc.ts).replace(' · условно', ''); $('hdate').className = 'hdate ' + sc.ts.k;
+  const main = SCENES.filter(s => !s.route); const n = main.findIndex(s => s.id === sc.id);
+  $('hep').textContent = sc.route ? 'Маршрут ' + ({ A: '1', B: '2', C: '3' })[sc.route] + ' · ' + sc.title : `Эп. ${String(n + 1).padStart(2, '0')}/${main.length} · ${sc.title}`;
+  $('evn').textContent = S.ev.size;
+  $('bsoundt').textContent = S.sound ? 'Звук вкл' : 'Звук'; $('bsound').setAttribute('aria-pressed', S.sound);
+}
+
+/* ================= МОДАЛЬНЫЕ ОКНА ================= */
+function openModal(title, html, tabs) { S.paused = true; $('mtitle').textContent = title; $('mtabs').innerHTML = tabs || ''; $('mtabs').hidden = !tabs; $('mbody').innerHTML = html; $('modal').hidden = false; $('mbody').scrollTop = 0; tgBack(true); setTimeout(() => { $('mbox').focus(); }, 30); }
+function closeModal() { $('modal').hidden = true; S.paused = false; tgBack(false); try { $('stage').focus({ preventScroll: true }); } catch (e) {} }
+function openDoc(d) { const D = DOCS[d]; openModal(D.t, `<div class="paper big ${D.fic ? 'fic' : ''}">${D.fic ? '<span class="chip fic stamp">вымышленный документ</span>' : '<span class="chip ok stamp">реальный документ</span>'}${D.html}${D.src ? '<p class="src">' + srcLinks(D.src) + '</p>' : ''}</div>`); AU.sfx('paper'); }
+function openFacts() { const sc = cur(); const li = (arr, cls) => arr.length ? arr.map(x => `<li class="${cls}">${typeof x === 'string' ? x : x.t + (x.src ? `<span class="src">${srcLinks(x.src)}</span>` : '')}</li>`).join('') : '<li class="muted">—</li>'; openModal('Что здесь правда · ' + sc.title, `<div class="factcols"><section><h3>${chip('fact')} Подтверждено источниками</h3><ul>${li(sc.facts || [], 'f')}</ul></section><section><h3>${chip('int')} Интерпретации</h3><ul>${li(sc.interp || [], 'i')}</ul></section><section><h3>${chip('fic')} Художественные допущения</h3><ul>${li(sc.fiction || [], 'x')}</ul></section></div>`); }
+function openTimeline() {
+  const fic = SCENES.filter(s => s.ts.k === 'fic').sort((a, b) => a.ts.d - b.ts.d || (a.ts.t || '').localeCompare(b.ts.t || ''));
+  const row = s => { const v = S.visited.has(s.id); return `<li class="${v ? 'v' : 'lock'}"><span class="td">${tsLabel(s.ts).replace(' · условно', '')}</span><span class="tt">${s.title}</span>${v ? `<button data-act="jump" data-s="${s.id}">перейти</button>` : '<span class="muted">не пройдено</span>'}</li>`; };
+  const real = REAL_EVENTS; const _unused = [['дек. 2018', 'Внесён законопроект об устойчивом Рунете', 'ved3'], ['24.01.2019', 'Законы о недостоверной информации — 1-е чтение', 'med1'], ['12.02.2019', 'Рунет — 1-е чтение: 334 за, 47 против', 'kom1'], ['06–07.03.2019', 'Законы о недостоверной информации — 2-е и 3-е чтения', 'sova'], ['13.03.2019', 'Совет Федерации одобрил законы о недостоверной информации', 'sova'], ['18.03.2019', 'Подписан № 31-ФЗ', 'fz31'], ['16.04.2019', 'Рунет — 3-е чтение: 307 за, 68 против', 'ved3'], ['22.04.2019', 'Совет Федерации одобрил закон о Рунете', 'ifxs'], ['01.05.2019', 'Опубликован № 90-ФЗ', 'ifxs'], ['01.11.2019', 'Основная часть № 90-ФЗ вступила в силу', 'ifxs']];
+  openModal('Хронология', `<p class="pnote">Порядок показа в игре ≠ порядок событий: сюжет прыгает назад и вперёд. Ниже — события по времени.</p><h3>Сюжет · условные даты (Д0 — ночь пожара)</h3><ol class="tl">${fic.map(row).join('')}</ol><h3>Исторические параллели ${chip('fact')}</h3><ol class="tl real">${real.map(([d, t, s]) => `<li class="v"><span class="td">${d}</span><span class="tt">${t}</span><a href="${SRC[s].url}" target="_blank" rel="noopener">источник</a></li>`).join('')}</ol><h3>Вне времени</h3><ol class="tl">${SCENES.filter(s => s.ts.k !== 'fic').map(row).join('')}</ol>`);
+}
+function archTabs(active) { return [['ev', 'Документы'], ['board', 'Доска'], ['par', 'Параллели'], ['src', 'Источники'], ['fic', 'Допущения']].map(([k, n]) => `<button class="tab ${k === active ? 'on' : ''}" data-act="archive" data-tab="${k}">${n}</button>`).join(''); }
+function openArchive(tab = 'ev') {
+  let html = '';
+  if (tab === 'ev') { const all = Object.keys(EV); html = `<p class="pnote">Найдено ${S.ev.size} из ${all.length}. Вымышленные документы сюжета и реальные исторические параллели помечены разными цветами.</p><div class="evgrid">${all.map(k => { const e = EV[k]; const has = S.ev.has(k); return has ? `<div class="ev ${e.st}"><div class="evh">${chip(e.st)}<small>${e.kind}</small></div><b>${e.t}</b><p>${e.x}</p>${e.src ? `<p class="src">${srcLinks(e.src)}</p>` : ''}</div>` : `<div class="ev lock"><b>?</b><p>Не найдено</p></div>`; }).join('')}</div>`; }
+  if (tab === 'board') { const pos = BOARD.pos; html = `<p class="pnote"><span class="lg f"></span> связь подтверждена документом (в сюжете или в реальности) · <span class="lg h"></span> гипотеза, требует проверки. Связи появляются, когда найдены обе улики.</p><div class="boardwrap"><div class="board" id="boardel"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${BOARD.links.filter(([a, b]) => S.ev.has(a) && S.ev.has(b)).map(([a, b, t]) => { const [x1, y1] = pos[a], [x2, y2] = pos[b]; return `<line x1="${x1 * 25 + 12.5}" y1="${y1 * 20 + 10}" x2="${x2 * 25 + 12.5}" y2="${y2 * 20 + 10}" class="${t}"/>`; }).join('')}</svg>${Object.keys(pos).map(k => { const [x, y] = pos[k]; const has = S.ev.has(k); return `<div class="bc ${has ? EV[k].st : 'lock'}" style="left:${x * 25 + 1.5}%;top:${y * 20 + 2}%">${has ? `<b>${EV[k].t}</b>${chip(EV[k].st)}` : '<b>?</b>'}</div>`; }).join('')}${BOARD.links.filter(([a, b]) => S.ev.has(a) && S.ev.has(b)).map(([a, b, t, lab]) => { const [x1, y1] = pos[a], [x2, y2] = pos[b]; return `<span class="bl ${t}" style="left:${(x1 + x2) / 2 * 25 + 12.5}%;top:${(y1 + y2) / 2 * 20 + 10}%">${lab}</span>`; }).join('')}</div></div>`; }
+  if (tab === 'src') html = Object.entries(SRC_CATS).map(([c, n]) => `<h3>${n}</h3><ul class="srcl">${Object.values(SRC).filter(s => s.cat === c).map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${s.t}</a></li>`).join('')}</ul>`).join('');
+  if (tab === 'par') html = `<p class="pnote">Страна, закон и персонажи вымышлены. Механизмы — нет. Вот где они встречались в истории.</p><div class="evgrid">${Object.keys(EV).filter(k => EV[k].st === 'fact').map(k => `<div class="ev fact"><div class="evh">${chip('fact')}<small>${S.ev.has(k) ? 'найдено в игре' : 'ещё не встречено'}</small></div><b>${EV[k].t}</b><p>${EV[k].x}</p><p class="src">${srcLinks(EV[k].src)}</p></div>`).join('')}</div><p class="pnote">Параллель — не равенство: ни одна реальная страна не описана в игре целиком.</p>`;
+  if (tab === 'fic') html = `<ul class="laws"><li>Союз Пушистых Республик, Палата Депутатов, Совет Регионов, «Единая Миска», «Дворовый фронт», Ведомство спокойствия, Аппарат, Первый Пушистый банк и канал «Вести Спокойствия» вымышлены.</li><li>Все персонажи — коты и вымышлены; Верховный Кот не изображает реального человека.</li><li>Закон о тишине, его статьи, указы, письма, даты Д±N и голосования вымышлены.</li><li>«Индекс спокойствия» — художественная гипербола, а не описание конкретной реальной системы.</li><li>Пожар архива и штамп типографии — сюжетный приём; совпадение повода и закона в игре не утверждает ничего о реальных событиях.</li><li>Исторические параллели даны с источниками во вкладке «Параллели».</li></ul>`;
+  openModal('Архив', html, archTabs(tab));
+}
+function openMenu() { openModal('Пауза', `<div class="menu"><button data-act="close">Продолжить</button><button data-act="replay">Повторить переход</button><button data-act="timeline">Хронология</button><button data-act="archive" data-tab="ev">Архив и доска</button><button data-act="script">Сценарий и раскадровка</button><button data-act="chars">Персонажи</button><button data-act="help">Управление и ограничения</button><button data-act="sound">${S.sound ? 'Выключить звук' : 'Включить звук'}</button><button data-act="rm">${S.rm ? 'Обычное движение' : 'Меньше движения'}</button>${tgv('8.0') ? `<button data-act="fs">${TG.isFullscreen ? 'Выйти из полноэкранного' : 'Полный экран'}</button>` : ''}<button data-act="restart">Начать заново</button></div>`); }
+function openScript() {
+  const lines = (arr) => arr.map(l => `<li><b>${l.w === 'narr' ? 'Закадр' : (CH[l.w]?.name || l.w)}:</b> ${l.x}${l.cap ? ` <span class="capw">${l.cap}</span>` : ''}${l.choices ? '<br><i>Выбор: ' + l.choices.map(c => c.l).join(' / ') + '</i>' : ''}</li>`).join('');
+  openModal('Сценарий и раскадровка', SCENES.map((s, i) => `<article class="sc"><h3>${s.route ? 'Маршрут ' + ({ A: '1', B: '2', C: '3' })[s.route] : 'Эпизод ' + (SCENES.filter(x => !x.route).indexOf(s) + 1)} · ${s.title} <small>${tsLabel(s.ts)}</small></h3><dl><dt>id</dt><dd>${s.id}</dd><dt>Локация</dt><dd>${s.loc}</dd><dt>Камера</dt><dd>${s.camera}</dd><dt>Вход</dt><dd>${i && SCENES[i - 1].out ? SCENES[i - 1].out.d : 'Старт'}</dd><dt>Выход</dt><dd>${s.out?.d || '—'} <code>${s.out?.type || ''}</code></dd><dt>Персонажи</dt><dd>${(s.actors || []).map(a => CH[a.c].name).join(', ') || '—'}</dd><dt>Титр</dt><dd>${s.cap}</dd><dt>Композиция</dt><dd>${s.visuals}</dd><dt>Анимация</dt><dd>${s.anim}</dd><dt>Интерактив</dt><dd>${s.interaction}</dd><dt>Реплики</dt><dd><ol class="sl">${lines(s.lines)}${s.blocks ? Object.entries(s.blocks).map(([k, b]) => `<li class="blk"><i>Ветка «${k}»:</i><ol>${lines(b)}</ol></li>`).join('') : ''}</ol></dd><dt>Факты</dt><dd>${(s.facts || []).map(f => f.t).join(' · ') || '—'}</dd><dt>Допущения</dt><dd>${(s.fiction || []).join(' · ') || '—'}</dd><dt>Далее</dt><dd>${s.next || '—'}${s.lines.some(l => l.choices && l.choices.some(c => c.go)) ? ' / выбор маршрута' : ''}</dd></dl></article>`).join(''));
+}
+function openChars() {
+  openModal('Персонажи', `<div class="chars">${Object.entries(CH).filter(([k, c]) => !c.hide && k !== 'narr' && c.pal).map(([k, c]) => `<div class="charc"><canvas data-spr="${k}" width="34" height="33"></canvas><div><h3>${c.name}</h3><p class="role">${c.role}</p><dl><dt>Облик</dt><dd>${c.look}</dd><dt>Характер</dt><dd>${c.nature}</dd><dt>Мотивация</dt><dd>${c.motive}</dd><dt>Реплики</dt><dd>${c.lines.map(l => '«' + l + '»').join(' ')}</dd><dt>Анимации</dt><dd>${c.anim}</dd><dt>Функция</dt><dd>${c.func}</dd></dl></div></div>`).join('')}</div>`);
+  document.querySelectorAll('canvas[data-spr]').forEach(cv => { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sprite(cv.dataset.spr, {}), 0, 0); });
+}
+function openHelp() { openModal('Управление и об игре', `<div class="help"><h3>Управление</h3><ul><li><kbd>Пробел</kbd> <kbd>Enter</kbd> или клик по сцене — дальше (во время перехода — пропустить его)</li><li><kbd>Backspace</kbd> или <kbd>↓</kbd> — назад</li><li><kbd>↑</kbd> <kbd>↓</kbd> — выбор варианта; <kbd>Enter</kbd> — подтвердить</li><li><kbd>Esc</kbd> — пауза и меню</li><li>Клик по подсвеченному предмету — документ; по персонажу — реплика</li></ul><h3>Об игре</h3><ul><li>18+. Тёмная сатира. Около 20–30 минут.</li><li>Ваши решения меняют индекс спокойствия, реплики и эпилог, но не закон. Это не ошибка, а смысл игры.</li><li>Мир теряет цвет по мере того, как действует закон.</li><li>Графика нарисована кодом по пикселям; звук синтезируется в браузере.</li></ul><h3>Что проверено</h3><ul><li>Исторические параллели (1933 г., Штази, «социальный рейтинг») сверены с источниками, ссылки в архиве.</li><li>Всё остальное — вымысел.</li></ul></div>`); }
+
+/* ================= УПРАВЛЕНИЕ ================= */
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act; e.stopPropagation();
+  if (a === 'back') { hap.tap(); back(); return; }
+  if (a === 'fs') { try { TG.isFullscreen ? TG.exitFullscreen() : TG.requestFullscreen(); } catch (e) {} closeModal(); return; }
+  if (a === 'close') closeModal(); else if (a === 'replay') { closeModal(); if (S.hist.length) { const pi = S.hist[S.hist.length - 1]; const ti = S.i; S.i = pi; startTransition(ti); } }
+  else if (a === 'timeline') openTimeline(); else if (a === 'archive') openArchive(b.dataset.tab); else if (a === 'script') openScript(); else if (a === 'chars') openChars(); else if (a === 'help') openHelp();
+  else if (a === 'sound') { S.sound = !S.sound; savePrefs(); if (S.sound) { AU.init(); AU.ctx?.resume?.(); AU.ambKind = null; AU.ambience(AMB[cur().bg] || 'quiet'); } else AU.stopAll(); updHud(); if (!$('modal').hidden) openMenu(); }
+  else if (a === 'rm') { S.rm = !S.rm; savePrefs(); document.body.classList.toggle('rm', S.rm); openMenu(); }
+  else if (a === 'restart') { clearProgress(); closeModal(); Object.assign(S, { asked: {}, hist: [], level: 0, aside: null, calm: GAME.calm0, flags: {}, applied: {} }); S.ev.clear(); S.visited.clear(); S.routes.clear(); startTransition(0, { type: 'rewind' }); }
+  else if (a === 'jump') jump(b.dataset.s); else if (a === 'goto') { S.hist.push(S.i); startTransition(idx(b.dataset.s), { type: 'tunnel' }); }
+  else if (a === 'facts') openFacts(); else if (a === 'menu') openMenu();
+  else if (a === 'pclose') { $('panel').hidden = true; }
+  else if (a === 'arow') { b.classList.toggle('open'); }
+  else if (a === 'lvl') { const L = LEVELS[+b.dataset.i]; document.querySelectorAll('.lvl').forEach(x => x.classList.toggle('on', x === b)); $('lvlbody').innerHTML = `<h4>${+b.dataset.i + 1}. ${L.n}</h4><dl class="lv"><dt>Что видно</dt><dd>${L.see}</dd><dt>Процедура</dt><dd>${L.proc}</dd><dt>Интересы</dt><dd>${L.int}</dd><dt>Подтверждено</dt><dd>${L.ok}</dd><dt>Неизвестно</dt><dd>${L.unk}</dd><dt>Значение</dt><dd>${L.mean}</dd></dl>`; }
+});
+$('hot').addEventListener('click', () => advance());
+$('dlg').addEventListener('click', (e) => { if (e.target.closest('button')) return; advance(); });
+$('mclose').addEventListener('click', closeModal);
+document.querySelectorAll('#choices').forEach(() => {});
+$('modal').addEventListener('click', (e) => { if (!e.target.closest('.mbox')) closeModal(); });
+const isEsc = (e) => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
+let escT = 0;
+function onEsc(e) { e.preventDefault(); e.stopPropagation(); if (e.repeat) return; const now = performance.now(); if (now - escT < 250) return; escT = now; !$('modal').hidden ? closeModal() : openMenu(); }
+window.addEventListener('keydown', (e) => { if (isEsc(e)) onEsc(e); }, true);
+window.addEventListener('keyup', (e) => { if (isEsc(e) && performance.now() - escT > 400 && !$('modal').hidden) { escT = performance.now(); closeModal(); } }, true);
+document.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const modal = !$('modal').hidden;
+  if (isEsc(e)) return;
+  if (modal) return;
+  const ln = curLine(); const hasCh = ln && ln.choices && !S.aside && !S.typing && !$('choices').hidden;
+  if (e.target.closest && e.target.closest('#panel, #hud') && (e.key === 'Enter' || e.key === ' ')) return;
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (hasCh && e.key === 'Enter') return choose(S.ci); advance(); }
+  else if (e.key === 'Backspace') { e.preventDefault(); back(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); if (hasCh) { S.ci = (S.ci + 1) % ln.choices.length; focusChoice(); AU.sfx('choose'); } else back(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); if (hasCh) { S.ci = (S.ci - 1 + ln.choices.length) % ln.choices.length; focusChoice(); AU.sfx('choose'); } }
+});
+
+/* ================= МАСШТАБ ================= */
+function fit() { const st = document.getElementById('stage'); if (!st) return; const w = innerWidth, h = (inTG && TG.viewportStableHeight) || innerHeight; st.classList.toggle('land', w > h * 1.2 && h < 560); }
+addEventListener('resize', fit);
+
+/* ================= ЦИКЛ ================= */
+let last = performance.now();
+function loop(now) {
+  const dt = now - last; last = now;
+  const sc = cur(); const t = now;
+  if (TRS) {
+    const p = Math.min(1, (now - TRS.t0) / TRS.dur);
+    if (TRS.phase === 'out') { renderScene(bxA, sc, t, now - S.t0); TR[TRS.type].out(vctx, bufA, p, TRS.f, TRS.dir); if (p >= 1) { enterScene(TRS.to, TRS.landEnd); TRS.phase = 'in'; TRS.t0 = now; TRS.dur = S.rm ? 260 : 800; } }
+    else { renderScene(bxA, cur(), t, now - S.t0); TR[TRS.type].in(vctx, bufA, p, TRS.f, TRS.dir); if (p >= 1) { TRS = null; afterEnter(); } }
+  } else {
+    renderScene(vctx, sc, t, now - S.t0);
+  }
+  if (S.typing && !S.paused) { const prev = Math.floor(S.shown); S.shown += dt / 24; const n = Math.floor(S.shown); if (n !== prev) { $('dtext').textContent = S.full.slice(0, n); if (n % 3 === 0) AU.sfx('blip'); } if (S.shown >= S.full.length) finishTyping(); }
+  if (S.ui === 'votes' && $('v0')) { const p = Math.min(1, (now - S.vt0) / 2400); const sv = cur().score || [450, 0, 0, 0]; sv.forEach((v, k) => $('v' + k).textContent = Math.round(v * p)); $('vfill').style.width = (sv[0] / 450 * 100 * p) + '%'; }
+  requestAnimationFrame(loop);
+}
+
+/* ================= СТАРТ ================= */
+function applyState(st) { S.i = Math.min(st.i ?? 0, SCENES.length - 1); (st.ev || []).forEach(x => S.ev.add(x)); (st.visited || []).forEach(x => S.visited.add(x)); S.hist = st.hist || []; S.asked = st.asked || {}; S.calm = st.calm ?? GAME.calm0; S.flags = st.flags || {}; S.applied = st.applied || {}; }
+function hideStart() { $('start').hidden = true; BOOTED = true; $('stage').focus({ preventScroll: true }); }
+function boot() {
+  document.body.classList.toggle('rm', S.rm);
+  fit(); enterScene(0); requestAnimationFrame(loop);
+  loadProgress((st) => { if (st && (st.i > 0 || st.pos > 0)) { const b = $('bcont'); b.hidden = false; b.textContent = 'Продолжить · эп. ' + (Math.min(st.i, SCENES.length - 1) + 1); b.onclick = (e) => { e.stopPropagation(); applyState(st); enterScene(S.i); S.pos = Math.min(st.pos || 0, cur().lines.length - 1); if (S.sound) { AU.init(); AU.ctx?.resume?.(); AU.ambKind = null; AU.ambience(AMB[cur().bg]); } hideStart(); afterEnter(); hap.hit('medium'); }; } });
+}
+$('bstart').addEventListener('click', (e) => { e.stopPropagation(); clearProgress(); hideStart(); afterEnter(); hap.hit('medium'); });
+$('bstartS').addEventListener('click', (e) => { e.stopPropagation(); clearProgress(); S.sound = true; savePrefs(); AU.init(); AU.ctx?.resume?.(); AU.ambKind = null; AU.ambience(AMB[cur().bg]); updHud(); hideStart(); afterEnter(); hap.hit('medium'); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { if (BOOTED) saveProgress(true); try { AU.ctx && AU.ctx.suspend(); } catch (e) {} } else { try { S.sound && AU.ctx && AU.ctx.resume(); } catch (e) {} } });
+boot();
+
+</script>
+</body>
+</html>
