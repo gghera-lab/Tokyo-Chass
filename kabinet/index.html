@@ -112,6 +112,33 @@ ul.sl{padding-left:18px;display:grid;gap:6px;margin:0}
 #stage.land #hud{grid-area:hud}#stage.land #screen{grid-area:screen;align-self:center}#stage.land #lower{grid-area:lower}#stage.land #bar{grid-area:bar}
 #stage.land #bar button{min-height:36px;flex-direction:row}#stage.land .stat .tube{height:20px}
 @media (max-height:600px){.stat .tube{height:24px}#ctext{font-size:15px}.opt{min-height:40px;padding:8px 10px;font-size:14.5px}}
+/* компьютер: слева большой экран, справа шкалы и карточка */
+#stage.pc{max-width:1680px;display:grid;gap:14px;padding:14px 18px;grid-template-columns:minmax(0,1fr) clamp(380px,31vw,500px);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:'screen hud' 'screen lower' 'screen bar'}
+#stage.pc #screen{grid-area:screen;align-self:center;justify-self:center;width:min(100%,calc((var(--tg-viewport-stable-height,100dvh) - 40px) * 16 / 9));border:3px solid #000;box-shadow:0 0 0 3px var(--line),0 18px 40px rgba(0,0,0,.6)}
+#stage.pc #hud{grid-area:hud;border:3px solid #000;box-shadow:0 0 0 2px var(--line);padding:10px 12px 8px}
+#stage.pc .hmeta{font-size:11px;padding-bottom:10px}
+#stage.pc .stat .tube{height:64px;max-width:58px}#stage.pc .stat small{font-size:8.5px}
+#stage.pc .arr{top:22px;font-size:15px}#stage.pc .arr.big{font-size:22px;top:18px}
+#stage.pc #lower{grid-area:lower;padding:0}
+#stage.pc #panel{inset:0}#stage.pc #card{height:auto;max-height:100%}
+#stage.pc #start,#stage.pc #end{position:fixed;display:flex;padding:30px}#stage.pc .st-in,#stage.pc #endbox{margin:auto}
+#stage.pc #ctext{font-size:18px;line-height:1.45}
+#stage.pc .opt{font-size:16.5px;padding:13px 14px;min-height:52px;transition:background .1s}
+#stage.pc .opt:hover{background:#2d2f4a;box-shadow:inset 0 0 0 2px var(--gold)}#stage.pc .opt.on{background:#3a365a}
+#stage.pc .opt .ok{min-width:20px;text-align:center;border:2px solid var(--gold);padding:3px 2px}
+#stage.pc .opt.next .ok{border-color:#000;color:#000}
+#stage.pc .cport{width:78px;height:54px}#stage.pc #cname{font-size:17px}#stage.pc #crole{font-size:13px}
+#stage.pc #bar{grid-area:bar;border:3px solid #000;box-shadow:0 0 0 2px var(--line);padding:6px}
+#stage.pc #bar button{flex-direction:row;gap:6px;min-height:40px;font-size:8px}#stage.pc #bar .ic{font-size:14px}#stage.pc #bar button:hover{background:#33304e}
+#stage.pc #bar kbd{font:8px var(--f-px);color:var(--muted);border:1px solid var(--line);padding:2px 3px}
+#bar kbd{display:none}#stage.pc #bar kbd{display:inline}
+#stage.pc #cap{font-size:clamp(30px,3.6vw,64px);-webkit-text-stroke:10px #000}
+#stage.pc .st-in{max-width:980px}#stage.pc .st-in h1{font-size:110px}#stage.pc .st-in p{font-size:17px;max-width:640px;margin:0 auto 18px}
+#stage.pc #roles{grid-template-columns:repeat(3,1fr);gap:14px}
+#stage.pc .rolec{flex-direction:column;text-align:center;padding:16px 14px;gap:10px}#stage.pc .rolec canvas{width:156px;height:108px}#stage.pc .rolec:hover{box-shadow:inset 0 0 0 3px var(--gold)}
+#stage.pc #bcont{max-width:520px}
+#stage.pc #endbox{max-width:620px}
+.pckeys{display:none}#stage.pc .pckeys{display:inline}#stage.pc .tapkeys{display:none}
 body.rm *{animation-duration:0s!important;transition:none!important}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 </style>
@@ -139,10 +166,10 @@ body.rm *{animation-duration:0s!important;transition:none!important}
       <div id="panel" hidden></div>
     </section>
     <nav id="bar">
-      <button data-act="log"><span class="ic">▤</span>Журнал<span id="qn" hidden>0</span></button>
-      <button data-act="role"><span class="ic">◈</span>Роль</button>
-      <button data-act="sound"><span class="ic">♪</span><span id="bsoundt">Звук</span></button>
-      <button data-act="menu"><span class="ic">≡</span>Меню</button>
+      <button data-act="log"><span class="ic">▤</span>Журнал<kbd>J</kbd><span id="qn" hidden>0</span></button>
+      <button data-act="role"><span class="ic">◈</span>Роль<kbd>R</kbd></button>
+      <button data-act="sound"><span class="ic">♪</span><span id="bsoundt">Звук</span><kbd>S</kbd></button>
+      <button data-act="menu"><span class="ic">≡</span>Меню<kbd>Esc</kbd></button>
     </nav>
     <div id="start">
       <div class="st-in">
@@ -152,7 +179,7 @@ body.rm *{animation-duration:0s!important;transition:none!important}
         <p>Мурландия. Шесть шкал, сорок недель, бесконечная очередь в приёмной. Не дайте ни одной шкале упасть до нуля или взлететь до ста.</p>
         <button id="bcont" hidden>Продолжить</button>
         <div id="roles"></div>
-        <small class="fine">Выберите роль · тап по варианту — выбор, второй тап — решение<br>Сатира · 20–30 минут · страна и персонажи вымышлены</small>
+        <small class="fine"><span class="tapkeys">Выберите роль · тап по варианту — выбор, второй тап — решение</span><span class="pckeys">Клик или 1–3 — выбор · повторный клик или Enter — решение · Esc — меню</span><br>Сатира · 20–30 минут · страна и персонажи вымышлены</small>
       </div>
     </div>
     <div id="end" hidden><div id="endbox"></div></div>
@@ -998,8 +1025,8 @@ function showCard(c) {
 }
 function renderOptions() {
   const box = $('opts'); box.innerHTML = '';
-  S.card.o.forEach((o, i) => { const b = document.createElement('button'); b.className = 'opt' + (i === S.sel ? ' on' : ''); b.innerHTML = `<span class="ok">${i === S.sel ? '✓' : '▸'}</span><span>${o.l}</span>`; b.addEventListener('click', (e) => { e.stopPropagation(); pick(i); }); box.appendChild(b); });
-  const single = S.card.o.length === 1; $('hint').textContent = single ? '' : S.sel < 0 ? 'Выберите решение. Точки над шкалами покажут, что оно затронет.' : 'Нажмите ещё раз, чтобы решить.';
+  S.card.o.forEach((o, i) => { const b = document.createElement('button'); b.className = 'opt' + (i === S.sel ? ' on' : ''); const pc = isPC(); b.innerHTML = `<span class="ok">${i === S.sel ? '✓' : pc && S.card.o.length > 1 ? i + 1 : '▸'}</span><span>${o.l}</span>`; b.addEventListener('click', (e) => { e.stopPropagation(); pick(i); }); if (pc) { b.addEventListener('mouseenter', () => { if (S.mode === 'card' && S.sel < 0) previewDots(o); }); b.addEventListener('mouseleave', () => { if (S.mode === 'card') previewDots(S.sel >= 0 ? S.card.o[S.sel] : null); }); } box.appendChild(b); });
+  const single = S.card.o.length === 1; $('hint').textContent = isPC() ? (single ? 'Enter — дальше' : S.sel < 0 ? 'Наведите на вариант — точки над шкалами покажут, что он затронет. Клик или 1–' + S.card.o.length + ' — выбрать.' : 'Ещё клик или Enter — решить. ↑↓ — сменить вариант.') : single ? '' : S.sel < 0 ? 'Выберите решение. Точки над шкалами покажут, что оно затронет.' : 'Нажмите ещё раз, чтобы решить.';
   previewDots(S.sel >= 0 ? S.card.o[S.sel] : null);
 }
 function pick(i) {
@@ -1099,6 +1126,8 @@ const isEsc = (e) => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
 window.addEventListener('keydown', (e) => {
   if (isEsc(e)) { e.preventDefault(); if (!$('modal').hidden) closeModal(); else if (S.role && !S.ended) openMenu(); return; }
   if (!$('modal').hidden || S.mode !== 'card' || !S.card) { if (S.mode === 'vote' && (e.key === 'Enter' || e.key === ' ') && !$('vnext').hidden) { e.preventDefault(); $('vnext').click(); } return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'KeyJ') { openLog(); return; } if (e.code === 'KeyR') { openRole(); return; } if (e.code === 'KeyS') { S.sound = !S.sound; savePrefs(); if (S.sound) { AU.init(); AU.ctx?.resume?.(); } updHud(); return; }
   const n = S.card.o.length;
   if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); S.sel = (S.sel + 1) % n; hap.sel(); renderOptions(); }
   else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); S.sel = (S.sel - 1 + n) % n; renderOptions(); }
@@ -1107,7 +1136,8 @@ window.addEventListener('keydown', (e) => {
 }, true);
 document.addEventListener('visibilitychange', () => { if (document.hidden) { saveGame(); try { AU.ctx && AU.ctx.suspend(); } catch (e) {} } else { try { S.sound && AU.ctx && AU.ctx.resume(); } catch (e) {} } });
 
-function fit() { const st = $('stage'); const h = (inTG && TG.viewportStableHeight) || innerHeight; st.classList.toggle('land', innerWidth > h * 1.2 && h < 560); }
+function isPC() { return $('stage').classList.contains('pc'); }
+function fit() { const st = $('stage'); const h = (inTG && TG.viewportStableHeight) || innerHeight; const pc = innerWidth >= 900 && h >= 540; const was = st.classList.contains('pc'); st.classList.toggle('pc', pc); st.classList.toggle('land', !pc && innerWidth > h * 1.2 && h < 560); if (was !== pc && S.card && S.mode === 'card') renderOptions(); }
 addEventListener('resize', fit);
 document.body.classList.toggle('rm', S.rm);
 fit(); S.st = { kz: 50, dv: 50, sv: 50, bz: 50, ek: 50, el: 50, kr: 10 }; updHud(); SC.bg = 'cabinet'; SC.who = null; requestAnimationFrame(loop); showStart();
