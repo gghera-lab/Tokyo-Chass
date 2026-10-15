@@ -131,13 +131,15 @@ ul.sl{padding-left:18px;display:grid;gap:6px;margin:0}
 #stage.pc #bar{grid-area:bar;border:3px solid #000;box-shadow:0 0 0 2px var(--line);padding:6px}
 #stage.pc #bar button{flex-direction:row;gap:6px;min-height:40px;font-size:8px}#stage.pc #bar .ic{font-size:14px}#stage.pc #bar button:hover{background:#33304e}
 #stage.pc #bar kbd{font:8px var(--f-px);color:var(--muted);border:1px solid var(--line);padding:2px 3px}
-#bar kbd{display:none}#stage.pc #bar kbd{display:inline}
+#bar kbd{display:none}#stage.pc #bar kbd{display:inline}#stage.pc #bar button{min-width:0;padding:0 4px}@media (max-width:1400px){#stage.pc #bar kbd{display:none}}
 #stage.pc #cap{font-size:clamp(30px,3.6vw,64px);-webkit-text-stroke:10px #000}
 #stage.pc .st-in{max-width:980px}#stage.pc .st-in h1{font-size:110px}#stage.pc .st-in p{font-size:17px;max-width:640px;margin:0 auto 18px}
 #stage.pc #roles{grid-template-columns:repeat(3,1fr);gap:14px}
 #stage.pc .rolec{flex-direction:column;text-align:center;padding:16px 14px;gap:10px}#stage.pc .rolec canvas{width:156px;height:108px}#stage.pc .rolec:hover{box-shadow:inset 0 0 0 3px var(--gold)}
 #stage.pc #bcont{max-width:520px}
 #stage.pc #endbox{max-width:620px}
+.pconly{display:none!important}#stage.pc #bar .pconly{display:flex!important}#stage.pc #bar{grid-template-columns:repeat(5,1fr)}
+.fsbtn{margin-top:14px;font:10px/1.3 var(--f-px);background:transparent;color:var(--cream);border:2px solid var(--line);padding:10px 14px;min-height:42px;cursor:pointer}.fsbtn:hover{border-color:var(--gold);color:var(--gold)}
 .pckeys{display:none}#stage.pc .pckeys{display:inline}#stage.pc .tapkeys{display:none}
 body.rm *{animation-duration:0s!important;transition:none!important}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
@@ -166,10 +168,11 @@ body.rm *{animation-duration:0s!important;transition:none!important}
       <div id="panel" hidden></div>
     </section>
     <nav id="bar">
-      <button data-act="log"><span class="ic">▤</span>Журнал<kbd>J</kbd><span id="qn" hidden>0</span></button>
-      <button data-act="role"><span class="ic">◈</span>Роль<kbd>R</kbd></button>
-      <button data-act="sound"><span class="ic">♪</span><span id="bsoundt">Звук</span><kbd>S</kbd></button>
-      <button data-act="menu"><span class="ic">≡</span>Меню<kbd>Esc</kbd></button>
+      <button data-act="log" title="Журнал (J)"><span class="ic">▤</span>Журнал<kbd>J</kbd><span id="qn" hidden>0</span></button>
+      <button data-act="role" title="Роль и правила (R)"><span class="ic">◈</span>Роль<kbd>R</kbd></button>
+      <button data-act="sound" title="Звук (S)"><span class="ic">♪</span><span id="bsoundt">Звук</span><kbd>S</kbd></button>
+      <button data-act="menu" title="Меню (Esc)"><span class="ic">≡</span>Меню<kbd>Esc</kbd></button>
+      <button data-act="fs" class="pconly" title="Полный экран (F)"><span class="ic">⛶</span>Экран<kbd>F</kbd></button>
     </nav>
     <div id="start">
       <div class="st-in">
@@ -180,6 +183,7 @@ body.rm *{animation-duration:0s!important;transition:none!important}
         <button id="bcont" hidden>Продолжить</button>
         <div id="roles"></div>
         <small class="fine"><span class="tapkeys">Выберите роль · тап по варианту — выбор, второй тап — решение</span><span class="pckeys">Клик или 1–3 — выбор · повторный клик или Enter — решение · Esc — меню</span><br>Сатира · 20–30 минут · страна и персонажи вымышлены</small>
+        <button data-act="fs" id="bfs" class="fsbtn">⛶ Полный экран<span class="pckeys"> · F</span></button>
       </div>
     </div>
     <div id="end" hidden><div id="endbox"></div></div>
@@ -1092,7 +1096,7 @@ function openLog() {
   openModal('Журнал решений', `<p class="pnote">Ожидают последствий: <b>${S.queue.length}</b>. Что именно и когда — узнаете сами.</p><ol class="log">${rows}</ol>`);
 }
 function openRole() { const r = ROLES[S.role]; if (!r) return; openModal(r.full, `<dl class="rl"><dt>Что можете</dt><dd>${r.can}</dd><dt>Чего не можете</dt><dd>${r.cant}</dd><dt>Особенность</dt><dd>${r.twist}</dd></dl><h3>Шкалы</h3><ul class="sl">${STATS.map(s => `<li><b>${s.n}</b> — 0 или 100 означает конец игры: «${ENDINGS[s.lo].t}» или «${ENDINGS[s.hi].t}».</li>`).join('')}<li><b>Коррупция</b> — скрытая шкала. Растёт от подарков и сделок. На 100 — «${ENDINGS.arrest.t}».</li></ul><p class="pnote">Часть последствий приходит через несколько недель. Каждые четыре недели — сводка новостей. Бюджет — на ${GAME.budgetWeek}-й неделе, кризис — на ${GAME.crisisWeek}-й.</p>`); }
-function openMenu() { openModal('Меню', `<div class="menu"><button data-act="close">Продолжить</button><button data-act="role">Моя роль и правила</button><button data-act="log">Журнал решений</button><button data-act="sound">${S.sound ? 'Выключить звук' : 'Включить звук'}</button><button data-act="rm">${S.rm ? 'Обычное движение' : 'Меньше движения'}</button>${tgv('8.0') ? `<button data-act="fs">${TG.isFullscreen ? 'Выйти из полноэкранного' : 'Полный экран'}</button>` : ''}<button data-act="roles">Сменить роль (начать заново)</button></div><p class="pnote">18+ · сатира · страна Мурландия и все персонажи вымышлены.</p>`); }
+function openMenu() { openModal('Меню', `<div class="menu"><button data-act="close">Продолжить</button><button data-act="role">Моя роль и правила</button><button data-act="log">Журнал решений</button><button data-act="sound">${S.sound ? 'Выключить звук' : 'Включить звук'}</button><button data-act="rm">${S.rm ? 'Обычное движение' : 'Меньше движения'}</button>${canFS() ? `<button data-act="fs">${isFS() ? 'Выйти из полноэкранного · F' : 'Полный экран · F'}</button>` : ''}<button data-act="roles">Сменить роль (начать заново)</button></div><p class="pnote">18+ · сатира · страна Мурландия и все персонажи вымышлены.</p>`); }
 
 /* ================= СТАРТ ================= */
 function startRole(r) {
@@ -1104,7 +1108,7 @@ function startRole(r) {
   $('ctype').textContent = 'Назначение';
 }
 function showStart() {
-  $('start').hidden = false; $('end').hidden = true;
+  $('start').hidden = false; $('end').hidden = true; $('bfs').hidden = !canFS();
   const box = $('roles'); box.innerHTML = '';
   Object.entries(ROLES).forEach(([k, r]) => { const b = document.createElement('button'); b.className = 'rolec'; b.innerHTML = `<canvas width="104" height="72"></canvas><span><b>${r.n}</b><small>${r.twist}</small></span>`; const x = b.querySelector('canvas').getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(portrait(k), 0, 0); b.addEventListener('click', (e) => { e.stopPropagation(); startRole(k); }); box.appendChild(b); });
   loadSave((sv) => { const b = $('bcont'); if (sv && sv.role && !sv.ended) { b.hidden = false; b.textContent = `Продолжить · ${ROLES[sv.role].n}, неделя ${sv.week}`; b.onclick = (e) => { e.stopPropagation(); Object.assign(S, { role: sv.role, week: sv.week, st: sv.st, used: sv.used || [], flags: sv.flags || [], queue: sv.queue || [], log: sv.log || [], snap: sv.snap || sv.st, crisis: sv.crisis || null, ended: null, seen: [] }); $('start').hidden = true; hap.hit('medium'); const c = sv.cardData || DECK.find(d => d.id === sv.card) || FILLER.find(d => d.id === sv.card); if (c) showCard(c); else nextTurn(); }; } else b.hidden = true; });
@@ -1116,14 +1120,24 @@ document.addEventListener('click', (e) => {
   if (a === 'close') closeModal(); else if (a === 'menu') openMenu(); else if (a === 'log') openLog(); else if (a === 'role') openRole();
   else if (a === 'sound') { S.sound = !S.sound; savePrefs(); if (S.sound) { AU.init(); AU.ctx?.resume?.(); } updHud(); if (!$('modal').hidden) openMenu(); }
   else if (a === 'rm') { S.rm = !S.rm; savePrefs(); document.body.classList.toggle('rm', S.rm); openMenu(); }
-  else if (a === 'fs') { try { TG.isFullscreen ? TG.exitFullscreen() : TG.requestFullscreen(); } catch (er) {} closeModal(); }
+  else if (a === 'fs') { toggleFS(); closeModal(); }
   else if (a === 'roles') { clearSave(); closeModal(); S.role = null; S.ended = null; showStart(); }
   else if (a === 'again') { const r = S.role; startRole(r); }
 });
 $('mclose').addEventListener('click', closeModal);
 $('modal').addEventListener('click', (e) => { if (!e.target.closest('.mbox')) closeModal(); });
+function canFS() { const d = document.documentElement; return tgv('8.0') || !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || d.requestFullscreen || d.webkitRequestFullscreen); }
+function isFS() { return tgv('8.0') ? !!TG.isFullscreen : !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFS() {
+  try { if (tgv('8.0')) { TG.isFullscreen ? TG.exitFullscreen() : TG.requestFullscreen(); return; } } catch (e) {}
+  const d = document.documentElement;
+  try { if (isFS()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else { const r = (d.requestFullscreen || d.webkitRequestFullscreen).call(d); if (r && r.catch) r.catch(() => toast('Браузер не разрешил полный экран. Нажмите F11 (Windows) или Ctrl+Cmd+F (Mac).')); } } catch (e) { toast('Нажмите F11 (Windows) или Ctrl+Cmd+F (Mac).'); }
+}
+function toast(t) { let el = document.getElementById('toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99;background:#0a0b11;color:#f2ead6;border:3px solid #e0b85a;box-shadow:0 0 0 3px #000;padding:10px 14px;font:14px/1.4 var(--f-body);max-width:90vw;text-align:center'; document.body.appendChild(el); } el.textContent = t; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => el.hidden = true, 3500); }
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => setTimeout(fit, 50)));
 const isEsc = (e) => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
 window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey && !e.altKey && $('modal').hidden) { e.preventDefault(); toggleFS(); return; }
   if (isEsc(e)) { e.preventDefault(); if (!$('modal').hidden) closeModal(); else if (S.role && !S.ended) openMenu(); return; }
   if (!$('modal').hidden || S.mode !== 'card' || !S.card) { if (S.mode === 'vote' && (e.key === 'Enter' || e.key === ' ') && !$('vnext').hidden) { e.preventDefault(); $('vnext').click(); } return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
